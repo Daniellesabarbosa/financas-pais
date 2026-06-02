@@ -271,8 +271,13 @@
     <input type="text" id="e-desc" placeholder="Ex: Salário, Aluguel…"/>
     <div class="error-msg" id="e-err-desc">Informe uma descrição.</div>
     <label class="form-label" for="e-val">Valor (R$)</label>
-    <input type="number" id="e-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <input type="text" id="e-val" placeholder="0,00" inputmode="numeric" oninput="maskMoney(this)" onpaste="setTimeout(()=>maskMoney(this),0)"/>
     <div class="error-msg" id="e-err-val">Informe um valor válido.</div>
+    <label class="form-label" for="e-due">Dia de vencimento <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="text" id="e-due" placeholder="ex: 10" inputmode="numeric" maxlength="2" style="width:80px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)"/>
+      <span style="font-size:12px;color:var(--text3)">de cada mês</span>
+    </div>
     <label class="form-label">Recorrência</label>
     <div class="radio-row">
       <div class="radio-opt" id="e-rec-yes" onclick="setERec(true)">&#128257; Recorrente</div>
@@ -299,7 +304,7 @@
     <input type="text" id="emp-desc" placeholder="Ex: Salário maio, Vale transporte…"/>
     <div class="error-msg" id="emp-err-desc">Informe uma descrição.</div>
     <label class="form-label" for="emp-val">Valor (R$)</label>
-    <input type="number" id="emp-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <input type="text" id="emp-val" placeholder="0,00" inputmode="numeric" oninput="maskMoney(this)" onpaste="setTimeout(()=>maskMoney(this),0)"/>
     <div class="error-msg" id="emp-err-val">Informe um valor válido.</div>
     <div id="emp-dani-section" style="display:none">
       <label class="form-label">Este adiantamento foi pago pela Dani?</label>
@@ -313,6 +318,11 @@
       <div class="radio-opt" id="emp-rec-yes" onclick="setEmpRec(true)">&#128257; Recorrente</div>
       <div class="radio-opt" id="emp-rec-no"  onclick="setEmpRec(false)">&#128197; Única vez</div>
     </div>
+    <label class="form-label" for="emp-due">Dia de pagamento <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="text" id="emp-due" placeholder="ex: 5" inputmode="numeric" maxlength="2" style="width:80px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)"/>
+      <span style="font-size:12px;color:var(--text3)">de cada mês</span>
+    </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeEmpModal()">Cancelar</button>
       <button class="btn-save"   onclick="saveEmpEntry()">Salvar</button>
@@ -325,7 +335,7 @@
   <div class="modal">
     <div class="modal-title">Registrar Ressarcimento</div>
     <label class="form-label" for="r-val">Valor (R$)</label>
-    <input type="number" id="r-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <input type="text" id="r-val" placeholder="0,00" inputmode="numeric" oninput="maskMoney(this)" onpaste="setTimeout(()=>maskMoney(this),0)"/>
     <div class="error-msg" id="r-err">Informe um valor válido.</div>
     <label class="form-label" for="r-note">Observação (opcional)</label>
     <input type="text" id="r-note" placeholder="Ex: Pix, dinheiro…"/>
@@ -477,10 +487,11 @@ function renderIncomeList(elId,items,paid){
   if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
   el.innerHTML=items.map(e=>{
     const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const dueBadge=e.dueDay?`<span style="font-size:10px;color:var(--text3)">&#128197; dia ${e.dueDay}</span>`:'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
     return`<div class="item">
       <div class="dot income"></div>
-      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${inh}</div></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${dueBadge}${inh}</div></div>
       <span class="item-amount c-green">${fmt(e.value)}</span>
       <div class="item-actions">
         <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
@@ -497,10 +508,11 @@ function renderExpenseList(elId,items,paid){
     const isPaid=paid.has(e.id);
     const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
     const paidBadge=isPaid?'<span class="badge done">&#10003; Pago</span>':'';
+    const dueBadge=e.dueDay?`<span style="font-size:10px;color:var(--text3)">&#128197; vence dia ${e.dueDay}</span>`:'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
     return`<div class="item${isPaid?' paid-item':''}">
       <div class="dot expense"></div>
-      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${paidBadge}${inh}</div></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${paidBadge}${dueBadge}${inh}</div></div>
       <span class="item-amount c-red">${fmt(e.value)}</span>
       <div class="item-actions">
         <button class="btn-paid${isPaid?' is-paid':''}" onclick="markPaid('${e.id}')" title="${isPaid?'Desmarcar como pago':'Marcar como pago'}">${isPaid?'&#10003; Pago':'Pagar'}</button>
@@ -606,11 +618,26 @@ function setTab(t){
   if(t==='grafico')renderChart();
 }
 
+// ── MÁSCARA MONETÁRIA (R$ 5.000,00) ──
+function maskMoney(el){
+  let v=el.value.replace(/\D/g,'');
+  if(!v){el.value='';return;}
+  v=(parseInt(v,10)/100).toFixed(2);
+  el.value=Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function parseMoney(el){
+  // converte "5.000,00" → 5000.00
+  const v=el.value.replace(/\./g,'').replace(',','.');
+  return parseFloat(v);
+}
+
 // ── MODAL: LANÇAMENTO GERAL ──
 let eType='income',eRec=true;
 function openEntryModal(type){
   eType=type||'income';eRec=true;
-  document.getElementById('e-desc').value='';document.getElementById('e-val').value='';
+  document.getElementById('e-desc').value='';
+  document.getElementById('e-val').value='';
+  document.getElementById('e-due').value='';
   ['e-err-desc','e-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
   setEType(eType);setERec(true);
   document.getElementById('overlay-entry').classList.add('open');
@@ -621,12 +648,14 @@ function setEType(t){eType=t;['income','expense','dani'].forEach(x=>document.get
 function setERec(r){eRec=r;document.getElementById('e-rec-yes').classList.toggle('sel',r);document.getElementById('e-rec-no').classList.toggle('sel',!r);}
 function saveEntry(){
   const desc=document.getElementById('e-desc').value.trim();
-  const value=parseFloat(document.getElementById('e-val').value);
+  const value=parseMoney(document.getElementById('e-val'));
+  const dueRaw=document.getElementById('e-due').value.trim();
+  const dueDay=dueRaw?parseInt(dueRaw,10):null;
   let ok=true;
   document.getElementById('e-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
   document.getElementById('e-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
   if(!ok)return;
-  addEntry(cy,cm,{id:uid(),type:eType,desc,value,recurrent:eRec});
+  addEntry(cy,cm,{id:uid(),type:eType,desc,value,recurrent:eRec,dueDay:dueDay||null});
   closeEntryModal();render();
 }
 
@@ -635,7 +664,9 @@ let empIdx=0,empCat='salary',empRec=false,empByDani=false;
 function openEmpModal(idx){
   empIdx=idx;empCat='salary';empRec=false;empByDani=false;
   document.getElementById('emp-modal-title').textContent='Lançar — '+EMPS[idx].name;
-  document.getElementById('emp-desc').value='';document.getElementById('emp-val').value='';
+  document.getElementById('emp-desc').value='';
+  document.getElementById('emp-val').value='';
+  document.getElementById('emp-due').value='';
   ['emp-err-desc','emp-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
   setEmpCat('salary');setEmpRec(false);setEmpByDani(false);
   document.getElementById('overlay-emp').classList.add('open');
@@ -657,13 +688,15 @@ function setEmpByDani(v){
 }
 function saveEmpEntry(){
   const desc=document.getElementById('emp-desc').value.trim();
-  const value=parseFloat(document.getElementById('emp-val').value);
+  const value=parseMoney(document.getElementById('emp-val'));
+  const dueRaw=document.getElementById('emp-due').value.trim();
+  const dueDay=dueRaw?parseInt(dueRaw,10):null;
   let ok=true;
   document.getElementById('emp-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
   document.getElementById('emp-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
   if(!ok)return;
   const empId=EMPS[empIdx].id;
-  addEntry(cy,cm,{id:uid(),type:empId+'_'+empCat,desc,value,recurrent:empRec,byDani:empByDani});
+  addEntry(cy,cm,{id:uid(),type:empId+'_'+empCat,desc,value,recurrent:empRec,byDani:empByDani,dueDay:dueDay||null});
   if(empByDani&&empCat==='advance'){
     addEntry(cy,cm,{id:uid(),type:'dani',desc:'Adiantamento '+EMPS[empIdx].name+' — '+desc,value,recurrent:empRec});
   }
@@ -681,7 +714,7 @@ function openReimbModal(scope){
 }
 function closeReimbModal(){document.getElementById('overlay-reimb').classList.remove('open');}
 function saveReimb(){
-  const value=parseFloat(document.getElementById('r-val').value);
+  const value=parseMoney(document.getElementById('r-val'));
   document.getElementById('r-err').classList.toggle('show',!value||value<=0);
   if(!value||value<=0)return;
   const note=document.getElementById('r-note').value.trim();
