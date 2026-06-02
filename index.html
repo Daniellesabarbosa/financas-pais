@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanças dos Pais</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16181c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças dos Pais">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #16181c;
+    --bg2:     #1e2128;
+    --bg3:     #252830;
+    --bg4:     #2d3038;
+    --text:    #e8eaf0;
+    --text2:   #9da3b4;
+    --text3:   #5c6278;
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --green:    #34d399; --green-bg:  rgba(52,211,153,.13); --green-mid: #10b981;
+    --red:      #f87171; --red-bg:    rgba(248,113,113,.13); --red-mid:   #ef4444;
+    --blue:     #60a5fa; --blue-bg:   rgba(96,165,250,.13);  --blue-mid:  #3b82f6;
+    --amber:    #fbbf24; --amber-bg:  rgba(251,191,36,.13);  --amber-mid: #f59e0b;
+    --purple:   #a78bfa; --purple-bg: rgba(167,139,250,.13); --purple-mid:#8b5cf6;
+    --teal:     #2dd4bf; --teal-bg:   rgba(45,212,191,.13);  --teal-mid:  #14b8a6;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+  .app { max-width: 680px; margin: 0 auto; padding: 24px 16px 56px; }
+
+  /* ── Header ── */
+  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; gap:10px; flex-wrap:wrap; }
+  .header h1 { font-size:20px; font-weight:600; color:var(--text); }
+  .header-btns { display:flex; gap:7px; }
+
+  /* ── Tabs ── */
+  .tabs { display:flex; gap:4px; background:var(--bg2); border-radius:var(--radius); padding:4px; flex-wrap:wrap; margin-bottom:20px; }
+  .tab { flex:1; min-width:60px; padding:7px 4px; border-radius:6px; border:none; background:transparent; cursor:pointer; font-size:11px; color:var(--text2); font-weight:400; white-space:nowrap; text-align:center; transition:background .15s; }
+  .tab.active { background:var(--bg4); color:var(--text); font-weight:600; }
+
+  /* ── Mês ── */
+  .month-nav { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  .nav-btn { width:34px; height:34px; border:0.5px solid var(--border2); background:var(--bg2); border-radius:var(--radius); cursor:pointer; font-size:17px; color:var(--text); display:flex; align-items:center; justify-content:center; }
+  .nav-btn:hover { background:var(--bg3); }
+  .month-label { font-size:16px; font-weight:500; min-width:160px; text-align:center; }
+
+  /* ── Métricas ── */
+  .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  .metric { background:var(--bg2); border-radius:var(--radius); padding:14px; border:0.5px solid var(--border); }
+  .metric-label { font-size:12px; color:var(--text2); margin-bottom:5px; }
+  .metric-value { font-size:19px; font-weight:500; }
+  .c-green { color:var(--green); } .c-red { color:var(--red); } .c-blue { color:var(--blue); }
+  .c-purple{ color:var(--purple);} .c-amber { color:var(--amber);} .c-teal { color:var(--teal); }
+
+  /* ── Subtotais ── */
+  .subtotal-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .subtotal-chip { flex:1; min-width:140px; border-radius:var(--radius-lg); padding:10px 13px; display:flex; justify-content:space-between; align-items:center; }
+  .subtotal-chip.purple { background:var(--purple-bg); border:0.5px solid rgba(139,92,246,.3); }
+  .subtotal-chip.amber  { background:var(--amber-bg);  border:0.5px solid rgba(245,158,11,.3); }
+  .subtotal-chip.teal   { background:var(--teal-bg);   border:0.5px solid rgba(20,184,166,.3); }
+  .subtotal-label { font-size:12px; font-weight:500; }
+  .subtotal-label small { font-weight:400; display:block; font-size:11px; opacity:.7; margin-top:1px; }
+  .subtotal-value { font-size:16px; font-weight:500; }
+
+  /* ── Seção / Listas ── */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; margin-top:16px; }
+  .section-title { font-size:12px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+  .btn-add { border:0.5px solid var(--border2); background:var(--bg2); border-radius:var(--radius); padding:6px 12px; cursor:pointer; font-size:12.5px; color:var(--text2); transition:background .15s; }
+  .btn-add:hover { background:var(--bg3); color:var(--text); }
+  .list { display:flex; flex-direction:column; gap:5px; margin-bottom:4px; }
+
+  /* ── Item da lista ── */
+  .item { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:11px 13px; display:flex; align-items:center; gap:11px; transition:border-color .2s; }
+  .item.paid-item { opacity:.55; }
+  .item.paid-item .item-name { text-decoration:line-through; }
+  .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot.income  { background:var(--green-mid); }
+  .dot.expense { background:var(--red-mid); }
+  .dot.dani    { background:var(--purple-mid); }
+  .dot.salary  { background:var(--teal-mid); }
+  .dot.advance { background:var(--amber-mid); }
+  .dot.other   { background:var(--text3); }
+  .item-info { flex:1; min-width:0; }
+  .item-name { font-size:14px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item-meta { font-size:11px; color:var(--text3); margin-top:2px; display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .badge { font-size:10px; padding:1px 7px; border-radius:99px; white-space:nowrap; }
+  .badge.rec     { background:var(--blue-bg);   color:var(--blue);   }
+  .badge.once    { background:var(--bg3);        color:var(--text2);  }
+  .badge.dani    { background:var(--purple-bg);  color:var(--purple); }
+  .badge.salary  { background:var(--teal-bg);    color:var(--teal);   }
+  .badge.advance { background:var(--amber-bg);   color:var(--amber);  }
+  .badge.adv-dani{ background:var(--purple-bg);  color:var(--purple); }
+  .badge.done    { background:var(--green-bg);   color:var(--green);  }
+  .item-amount { font-size:14px; font-weight:500; white-space:nowrap; }
+  .item-actions { display:flex; gap:4px; align-items:center; }
+
+  /* ── Botão pago ── */
+  .btn-paid { border:0.5px solid var(--border2); background:transparent; border-radius:6px; cursor:pointer; font-size:13px; padding:3px 8px; color:var(--text3); transition:all .15s; white-space:nowrap; }
+  .btn-paid:hover { background:var(--green-bg); border-color:var(--green-mid); color:var(--green); }
+  .btn-paid.is-paid { background:var(--green-bg); border-color:var(--green-mid); color:var(--green); }
+
+  .item-del { background:transparent; border:none; cursor:pointer; color:var(--text3); font-size:15px; padding:3px 5px; border-radius:5px; }
+  .item-del:hover { background:var(--red-bg); color:var(--red); }
+  .empty { text-align:center; padding:20px; color:var(--text3); font-size:13px; border:0.5px dashed var(--border2); border-radius:var(--radius-lg); }
+
+  /* ── Hero Dani ── */
+  .hero-grid { background:var(--purple-bg); border:0.5px solid rgba(139,92,246,.3); border-radius:var(--radius-lg); padding:16px; margin-bottom:14px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .hero-item-label { font-size:11px; color:var(--purple); opacity:.8; margin-bottom:3px; }
+  .hero-item-value { font-size:20px; font-weight:500; }
+  .hero-btn-wrap { display:flex; align-items:flex-end; }
+
+  /* ── Hero Empregada ── */
+  .emp-hero { border-radius:var(--radius-lg); padding:16px; margin-bottom:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .emp-hero.amber { background:var(--amber-bg);  border:0.5px solid rgba(245,158,11,.3); }
+  .emp-hero.teal  { background:var(--teal-bg);   border:0.5px solid rgba(20,184,166,.3); }
+  .emp-hero-label { font-size:11px; margin-bottom:3px; opacity:.7; }
+  .emp-hero-value { font-size:17px; font-weight:500; }
+
+  /* ── Ressarcimentos ── */
+  .reimb-list { display:flex; flex-direction:column; gap:5px; margin-bottom:4px; }
+  .reimb-item { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:10px 13px; display:flex; align-items:center; gap:10px; }
+  .reimb-dot { width:7px; height:7px; border-radius:50%; background:var(--green-mid); flex-shrink:0; }
+  .reimb-info { flex:1; font-size:13px; color:var(--text2); }
+  .reimb-value { font-size:13px; font-weight:500; color:var(--green); }
+  .reimb-del { background:transparent; border:none; cursor:pointer; color:var(--text3); font-size:13px; padding:3px 5px; border-radius:5px; }
+  .reimb-del:hover { background:var(--red-bg); color:var(--red); }
+
+  /* ── Gráfico ── */
+  .chart-wrap { position:relative; width:100%; height:280px; }
+  canvas { width:100% !important; }
+  .legend { display:flex; gap:14px; margin-top:10px; font-size:12px; color:var(--text2); flex-wrap:wrap; }
+  .legend span { display:flex; align-items:center; gap:5px; }
+  .lsq { width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .lcirc { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  /* ── Info box ── */
+  .info-box { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:13px 15px; font-size:13px; color:var(--text2); margin-top:14px; }
+  .info-box p { margin-bottom:5px; } .info-box p:last-child { margin-bottom:0; }
+
+  /* ── Pages ── */
+  .page { display:none; } .page.active { display:block; }
+
+  /* ── Overlays / Modais ── */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:100; align-items:center; justify-content:center; padding:16px; }
+  .overlay.open { display:flex; }
+  .modal { background:var(--bg2); border:0.5px solid var(--border2); border-radius:var(--radius-lg); padding:22px; width:100%; max-width:410px; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:16px; color:var(--text); }
+  .form-label { font-size:12.5px; color:var(--text2); display:block; margin-bottom:5px; margin-top:13px; }
+  .form-label:first-of-type { margin-top:0; }
+  input[type=text], input[type=number] { width:100%; padding:8px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg3); color:var(--text); font-size:14px; outline:none; font-family:inherit; }
+  input:focus { box-shadow:0 0 0 2px rgba(96,165,250,.4); border-color:var(--blue-mid); }
+  .radio-row { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+  .radio-opt { flex:1; min-width:60px; padding:8px 5px; border:0.5px solid var(--border2); border-radius:var(--radius); cursor:pointer; font-size:12px; text-align:center; color:var(--text2); user-select:none; background:var(--bg3); transition:all .15s; }
+  .radio-opt:hover { border-color:var(--border2); background:var(--bg4); }
+  .radio-opt.sel { border-color:var(--blue-mid); background:var(--blue-bg); color:var(--blue); font-weight:500; }
+  .radio-opt.sel-purple { border-color:var(--purple-mid); background:var(--purple-bg); color:var(--purple); font-weight:500; }
+  .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+  .btn-cancel { border:0.5px solid var(--border2); background:var(--bg3); border-radius:var(--radius); padding:8px 16px; cursor:pointer; font-size:13px; color:var(--text2); }
+  .btn-save   { border:none; background:var(--blue-mid); border-radius:var(--radius); padding:8px 18px; cursor:pointer; font-size:13px; color:#fff; font-weight:500; }
+  .btn-save:hover { background:var(--blue); }
+  .btn-green  { border:none; background:var(--green-mid); border-radius:var(--radius); padding:8px 14px; cursor:pointer; font-size:13px; color:#fff; font-weight:500; }
+  .btn-green:hover { background:var(--green); }
+  .error-msg { font-size:12px; color:var(--red); margin-top:3px; display:none; }
+  .error-msg.show { display:block; }
+  .del-options { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+  .del-opt { border:0.5px solid var(--border2); border-radius:var(--radius); padding:11px 13px; cursor:pointer; background:var(--bg3); }
+  .del-opt:hover { background:var(--bg4); }
+  .del-opt.danger:hover { border-color:var(--red-mid); background:var(--red-bg); }
+  .del-opt.danger:hover .del-opt-title { color:var(--red); }
+  .del-opt-title { font-size:13px; font-weight:500; color:var(--text); }
+  .del-opt-desc  { font-size:11.5px; color:var(--text3); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>&#128176; Finanças dos Pais</h1>
+    <div class="header-btns">
+      <button class="btn-add" onclick="exportDB()">&#128229; Exportar</button>
+      <label class="btn-add" style="cursor:pointer">&#128228; Importar<input type="file" accept=".json" style="display:none" onchange="importDB(event)"></label>
+    </div>
+  </div>
+
+  <div class="tabs" id="main-tabs">
+    <button class="tab active" onclick="setTab('visao')">&#128200; Visão Geral</button>
+    <button class="tab" onclick="setTab('lancar')">&#43; Lançar</button>
+    <button class="tab" onclick="setTab('dani')">&#128149; Dani</button>
+    <button class="tab" onclick="setTab('emp0')">&#127968; Maria</button>
+    <button class="tab" onclick="setTab('emp1')">&#127968; Emp. 2</button>
+    <button class="tab" onclick="setTab('grafico')">&#128202; Gráfico</button>
+  </div>
+
+  <div class="month-nav">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
+    <span class="month-label" id="monthLabel"></span>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+  </div>
+
+  <!-- VISÃO GERAL -->
+  <div id="page-visao" class="page active">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Receitas</div><div class="metric-value c-green" id="m-income">R$ 0</div></div>
+      <div class="metric"><div class="metric-label">Despesas</div><div class="metric-value c-red"   id="m-expense">R$ 0</div></div>
+      <div class="metric"><div class="metric-label">Saldo</div>   <div class="metric-value c-blue"  id="m-balance">R$ 0</div></div>
+    </div>
+    <div class="subtotal-row" id="subtotal-row"></div>
+    <div class="section-header"><span class="section-title">&#9650; Receitas</span></div>
+    <div class="list" id="list-income"></div>
+    <div class="section-header"><span class="section-title">&#9660; Despesas</span></div>
+    <div class="list" id="list-expense"></div>
+  </div>
+
+  <!-- LANÇAR -->
+  <div id="page-lancar" class="page">
+    <div class="section-header"><span class="section-title">Nova Receita</span><button class="btn-add" onclick="openEntryModal('income')">&#43; Adicionar</button></div>
+    <div class="section-header"><span class="section-title">Nova Despesa</span><button class="btn-add" onclick="openEntryModal('expense')">&#43; Adicionar</button></div>
+    <div class="section-header"><span class="section-title">&#128149; Adiantamento da Dani</span><button class="btn-add" onclick="openEntryModal('dani')">&#43; Adicionar</button></div>
+    <div class="info-box">
+      <p><strong>&#128257; Recorrente:</strong> aparece automaticamente em meses futuros.</p>
+      <p><strong>&#128197; Única vez:</strong> lançado apenas no mês atual.</p>
+      <p><strong>&#10003; Pago:</strong> marque despesas como pagas na Visão Geral clicando no botão ao lado de cada item.</p>
+    </div>
+  </div>
+
+  <!-- ABA DANI -->
+  <div id="page-dani" class="page">
+    <div class="hero-grid">
+      <div><div class="hero-item-label">Adiantado este mês</div><div class="hero-item-value c-purple" id="d-total">R$ 0</div></div>
+      <div><div class="hero-item-label">Já ressarcido</div><div class="hero-item-value c-green" id="d-paid">R$ 0</div></div>
+      <div><div class="hero-item-label">A ressarcir</div><div class="hero-item-value c-red" id="d-pending">R$ 0</div></div>
+      <div class="hero-btn-wrap"><button class="btn-green" onclick="openReimbModal('dani')">&#10003; Registrar ressarcimento</button></div>
+    </div>
+    <div class="section-header"><span class="section-title">&#128149; Adiantamentos</span></div>
+    <div class="list" id="list-dani"></div>
+    <div class="section-header"><span class="section-title">&#10003; Ressarcimentos</span></div>
+    <div class="reimb-list" id="list-dani-reimb"></div>
+  </div>
+
+  <!-- ABAS EMPREGADAS -->
+  <div id="page-emp0" class="page"></div>
+  <div id="page-emp1" class="page"></div>
+
+  <!-- GRÁFICO -->
+  <div id="page-grafico" class="page">
+    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    <div class="legend">
+      <span><span class="lsq" style="background:#10b981"></span>Receitas</span>
+      <span><span class="lsq" style="background:#ef4444"></span>Despesas</span>
+      <span><span class="lcirc" style="background:#60a5fa"></span>Saldo (sobrou/faltou)</span>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: lançamento geral -->
+<div class="overlay" id="overlay-entry" onclick="if(event.target===this)closeEntryModal()">
+  <div class="modal">
+    <div class="modal-title">Adicionar Lançamento</div>
+    <label class="form-label">Tipo</label>
+    <div class="radio-row">
+      <div class="radio-opt" id="etype-income"  onclick="setEType('income')">&#9650; Receita</div>
+      <div class="radio-opt" id="etype-expense" onclick="setEType('expense')">&#9660; Despesa</div>
+      <div class="radio-opt" id="etype-dani"    onclick="setEType('dani')">&#128149; Dani</div>
+    </div>
+    <label class="form-label" for="e-desc">Descrição</label>
+    <input type="text" id="e-desc" placeholder="Ex: Salário, Aluguel…"/>
+    <div class="error-msg" id="e-err-desc">Informe uma descrição.</div>
+    <label class="form-label" for="e-val">Valor (R$)</label>
+    <input type="number" id="e-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <div class="error-msg" id="e-err-val">Informe um valor válido.</div>
+    <label class="form-label">Recorrência</label>
+    <div class="radio-row">
+      <div class="radio-opt" id="e-rec-yes" onclick="setERec(true)">&#128257; Recorrente</div>
+      <div class="radio-opt" id="e-rec-no"  onclick="setERec(false)">&#128197; Única vez</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeEntryModal()">Cancelar</button>
+      <button class="btn-save"   onclick="saveEntry()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: lançamento doméstica -->
+<div class="overlay" id="overlay-emp" onclick="if(event.target===this)closeEmpModal()">
+  <div class="modal">
+    <div class="modal-title" id="emp-modal-title">Lançar</div>
+    <label class="form-label">Categoria</label>
+    <div class="radio-row">
+      <div class="radio-opt" id="emp-cat-salary"  onclick="setEmpCat('salary')">&#128181; Salário</div>
+      <div class="radio-opt" id="emp-cat-advance" onclick="setEmpCat('advance')">&#128197; Adiantamento</div>
+      <div class="radio-opt" id="emp-cat-other"   onclick="setEmpCat('other')">&#8942; Outros</div>
+    </div>
+    <label class="form-label" for="emp-desc">Descrição</label>
+    <input type="text" id="emp-desc" placeholder="Ex: Salário maio, Vale transporte…"/>
+    <div class="error-msg" id="emp-err-desc">Informe uma descrição.</div>
+    <label class="form-label" for="emp-val">Valor (R$)</label>
+    <input type="number" id="emp-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <div class="error-msg" id="emp-err-val">Informe um valor válido.</div>
+    <div id="emp-dani-section" style="display:none">
+      <label class="form-label">Este adiantamento foi pago pela Dani?</label>
+      <div class="radio-row">
+        <div class="radio-opt" id="emp-dani-no"  onclick="setEmpByDani(false)">&#10005; Não</div>
+        <div class="radio-opt" id="emp-dani-yes" onclick="setEmpByDani(true)">&#128149; Sim, pela Dani</div>
+      </div>
+    </div>
+    <label class="form-label">Recorrência</label>
+    <div class="radio-row">
+      <div class="radio-opt" id="emp-rec-yes" onclick="setEmpRec(true)">&#128257; Recorrente</div>
+      <div class="radio-opt" id="emp-rec-no"  onclick="setEmpRec(false)">&#128197; Única vez</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeEmpModal()">Cancelar</button>
+      <button class="btn-save"   onclick="saveEmpEntry()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ressarcimento -->
+<div class="overlay" id="overlay-reimb" onclick="if(event.target===this)closeReimbModal()">
+  <div class="modal">
+    <div class="modal-title">Registrar Ressarcimento</div>
+    <label class="form-label" for="r-val">Valor (R$)</label>
+    <input type="number" id="r-val" placeholder="0,00" min="0.01" step="0.01"/>
+    <div class="error-msg" id="r-err">Informe um valor válido.</div>
+    <label class="form-label" for="r-note">Observação (opcional)</label>
+    <input type="text" id="r-note" placeholder="Ex: Pix, dinheiro…"/>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeReimbModal()">Cancelar</button>
+      <button class="btn-green"  onclick="saveReimb()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: excluir recorrente -->
+<div class="overlay" id="overlay-del" onclick="if(event.target===this)closeDelModal()">
+  <div class="modal" style="max-width:370px">
+    <div class="modal-title">Excluir lançamento recorrente</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px" id="del-desc"></div>
+    <div class="del-options">
+      <div class="del-opt" onclick="confirmDel('month')">
+        <div class="del-opt-title">&#128197; Somente este mês</div>
+        <div class="del-opt-desc">Remove apenas em <span id="del-ml"></span>. Continua nos demais.</div>
+      </div>
+      <div class="del-opt danger" onclick="confirmDel('forward')">
+        <div class="del-opt-title">&#128197;&#8594; Este e os próximos</div>
+        <div class="del-opt-desc">Remove a partir de <span id="del-ml2"></span>. Meses anteriores preservados.</div>
+      </div>
+      <div class="del-opt danger" onclick="confirmDel('all')">
+        <div class="del-opt-title">&#128465; Todos os meses</div>
+        <div class="del-opt-desc">Remove permanentemente de todo o histórico.</div>
+      </div>
+    </div>
+    <div style="text-align:right"><button class="btn-cancel" onclick="closeDelModal()">Cancelar</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const EMPS=[
+  {id:'emp0',name:'Maria',      color:'amber'},
+  {id:'emp1',name:'Empregada 2',color:'teal'}
+];
+let cy=new Date().getFullYear(), cm=new Date().getMonth();
+let chartObj=null;
+
+// DB.entries[y_m] = Entry[]
+// DB.reimbs[scope][y_m] = Reimb[]
+// DB.paid[y_m] = Set of ids (serialized as array)
+let DB={entries:{},reimbs:{},paid:{}};
+function dbLoad(){try{const s=localStorage.getItem('fin6');if(s)DB=JSON.parse(s);DB.entries=DB.entries||{};DB.reimbs=DB.reimbs||{};DB.paid=DB.paid||{};}catch(e){}}
+function dbSave(){try{localStorage.setItem('fin6',JSON.stringify(DB));}catch(e){}}
+dbLoad();
+
+function key(y,m){return y+'_'+m;}
+function cmpKey(k1,k2){const[y1,m1]=k1.split('_').map(Number);const[y2,m2]=k2.split('_').map(Number);return(y1*12+m1)-(y2*12+m2);}
+
+function getEntries(y,m){
+  const cur=key(y,m);
+  const own=(DB.entries[cur]||[]).map(e=>({...e}));
+  const ids=new Set(own.map(e=>e.id));
+  for(const k of Object.keys(DB.entries)){
+    if(cmpKey(k,cur)>=0)continue;
+    for(const e of DB.entries[k]){
+      if(!e.recurrent||ids.has(e.id))continue;
+      if(e.endBefore&&cmpKey(cur,e.endBefore)>=0)continue;
+      if(e.skips&&e.skips.includes(cur))continue;
+      own.push({...e,inherited:true});ids.add(e.id);
+    }
+  }
+  return own;
+}
+function getReimbs(scope,y,m){return((DB.reimbs[scope]||{})[key(y,m)])||[];}
+function getPaid(y,m){return new Set(DB.paid[key(y,m)]||[]);}
+function togglePaid(id,y,m){
+  const k=key(y,m);
+  if(!DB.paid[k])DB.paid[k]=[];
+  const s=new Set(DB.paid[k]);
+  if(s.has(id))s.delete(id);else s.add(id);
+  DB.paid[k]=Array.from(s);
+  dbSave();
+}
+function findOrigin(id){for(const k of Object.keys(DB.entries)){const e=(DB.entries[k]||[]).find(x=>x.id===id);if(e)return{k,e};}return null;}
+function addEntry(y,m,e){const k=key(y,m);if(!DB.entries[k])DB.entries[k]=[];DB.entries[k].push(e);dbSave();}
+function addReimb(scope,y,m,r){if(!DB.reimbs[scope])DB.reimbs[scope]={};const k=key(y,m);if(!DB.reimbs[scope][k])DB.reimbs[scope][k]=[];DB.reimbs[scope][k].push(r);dbSave();}
+function delAll(id){for(const k of Object.keys(DB.entries))DB.entries[k]=(DB.entries[k]||[]).filter(e=>e.id!==id);dbSave();}
+function delMonthOnly(id,y,m){const o=findOrigin(id);if(!o)return;const idx=DB.entries[o.k].findIndex(e=>e.id===id);if(idx<0)return;if(!DB.entries[o.k][idx].skips)DB.entries[o.k][idx].skips=[];DB.entries[o.k][idx].skips.push(key(y,m));dbSave();}
+function delFromMonth(id,y,m){const o=findOrigin(id);if(!o)return;const idx=DB.entries[o.k].findIndex(e=>e.id===id);if(idx<0)return;DB.entries[o.k][idx].endBefore=key(y,m);dbSave();}
+function delReimb(scope,y,m,id){const k=key(y,m);if(DB.reimbs[scope]&&DB.reimbs[scope][k])DB.reimbs[scope][k]=DB.reimbs[scope][k].filter(r=>r.id!==id);dbSave();}
+
+function fmt(v){return'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function uid(){return Date.now()+'-'+Math.random().toString(36).slice(2);}
+function today(){return new Date().toLocaleDateString('pt-BR');}
+
+// ── RENDER ──
+function render(){
+  document.getElementById('monthLabel').textContent=MONTHS[cm]+' '+cy;
+  const all=getEntries(cy,cm);
+  const paid=getPaid(cy,cm);
+
+  const inc  =all.filter(e=>e.type==='income');
+  const exp  =all.filter(e=>e.type==='expense');
+  const dani =all.filter(e=>e.type==='dani');
+  const emp0 =all.filter(e=>e.type.startsWith('emp0_'));
+  const emp1 =all.filter(e=>e.type.startsWith('emp1_'));
+
+  const ti  =inc.reduce((s,e)=>s+ +e.value,0);
+  const te  =exp.reduce((s,e)=>s+ +e.value,0);
+  const td  =dani.reduce((s,e)=>s+ +e.value,0);
+  const ta0 =emp0.filter(e=>e.type==='emp0_advance').reduce((s,e)=>s+ +e.value,0);
+  const ts0 =emp0.filter(e=>e.type!=='emp0_advance').reduce((s,e)=>s+ +e.value,0);
+  const ta1 =emp1.filter(e=>e.type==='emp1_advance').reduce((s,e)=>s+ +e.value,0);
+  const ts1 =emp1.filter(e=>e.type!=='emp1_advance').reduce((s,e)=>s+ +e.value,0);
+  const pagar0=Math.max(0,ts0-ta0);
+  const pagar1=Math.max(0,ts1-ta1);
+  const totalExp=te+td+pagar0+pagar1;
+  const bal=ti-totalExp;
+
+  document.getElementById('m-income').textContent=fmt(ti);
+  document.getElementById('m-expense').textContent=fmt(totalExp);
+  const bel=document.getElementById('m-balance');
+  bel.textContent=fmt(bal);bel.className='metric-value '+(bal>=0?'c-blue':'c-red');
+
+  // subtotais
+  const row=document.getElementById('subtotal-row');row.innerHTML='';
+  const te0=emp0.reduce((s,e)=>s+ +e.value,0);
+  const te1=emp1.reduce((s,e)=>s+ +e.value,0);
+  if(td>0) row.innerHTML+=`<div class="subtotal-chip purple"><div class="subtotal-label c-purple">&#128149; Adiantamentos da Dani<small>Incluídos nas despesas</small></div><div class="subtotal-value c-purple">${fmt(td)}</div></div>`;
+  if(te0>0) row.innerHTML+=`<div class="subtotal-chip amber"><div class="subtotal-label c-amber">&#127968; ${esc(EMPS[0].name)}<small>Sal+Outros: ${fmt(ts0)} &bull; Adiant.: ${fmt(ta0)} &bull; A pagar: ${fmt(pagar0)}</small></div><div class="subtotal-value c-amber">${fmt(pagar0)}</div></div>`;
+  if(te1>0) row.innerHTML+=`<div class="subtotal-chip teal"><div class="subtotal-label c-teal">&#127968; ${esc(EMPS[1].name)}<small>Sal+Outros: ${fmt(ts1)} &bull; Adiant.: ${fmt(ta1)} &bull; A pagar: ${fmt(pagar1)}</small></div><div class="subtotal-value c-teal">${fmt(pagar1)}</div></div>`;
+
+  renderIncomeList('list-income',inc,paid);
+  renderExpenseList('list-expense',exp,paid);
+
+  // dani
+  const dr=getReimbs('dani',cy,cm);
+  const dpaid=dr.reduce((s,r)=>s+ +r.value,0);
+  document.getElementById('d-total').textContent=fmt(td);
+  document.getElementById('d-paid').textContent=fmt(dpaid);
+  document.getElementById('d-pending').textContent=fmt(Math.max(0,td-dpaid));
+  renderSimpleList('list-dani',dani,'dani');
+  renderReimbList('list-dani-reimb',dr,'dani');
+
+  EMPS.forEach((emp,i)=>renderEmpPage(emp,i,all));
+  renderChart();
+}
+
+function renderIncomeList(elId,items,paid){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
+  el.innerHTML=items.map(e=>{
+    const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
+    return`<div class="item">
+      <div class="dot income"></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${inh}</div></div>
+      <span class="item-amount c-green">${fmt(e.value)}</span>
+      <div class="item-actions">
+        <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderExpenseList(elId,items,paid){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
+  el.innerHTML=items.map(e=>{
+    const isPaid=paid.has(e.id);
+    const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const paidBadge=isPaid?'<span class="badge done">&#10003; Pago</span>':'';
+    const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
+    return`<div class="item${isPaid?' paid-item':''}">
+      <div class="dot expense"></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${paidBadge}${inh}</div></div>
+      <span class="item-amount c-red">${fmt(e.value)}</span>
+      <div class="item-actions">
+        <button class="btn-paid${isPaid?' is-paid':''}" onclick="markPaid('${e.id}')" title="${isPaid?'Desmarcar como pago':'Marcar como pago'}">${isPaid?'&#10003; Pago':'Pagar'}</button>
+        <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSimpleList(elId,items,dotClass){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
+  el.innerHTML=items.map(e=>{
+    const amt_cls=dotClass==='dani'?'c-purple':'c-red';
+    const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
+    return`<div class="item">
+      <div class="dot ${dotClass}"></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${inh}</div></div>
+      <span class="item-amount ${amt_cls}">${fmt(e.value)}</span>
+      <div class="item-actions"><button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button></div>
+    </div>`;
+  }).join('');
+}
+
+function renderEmpList(elId,items){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
+  el.innerHTML=items.map(e=>{
+    const cat=e.type.split('_')[1];
+    const dotC=cat==='salary'?'salary':cat==='advance'?'advance':'other';
+    const catLabel=cat==='salary'?'Salário':cat==='advance'?'Adiantamento':'Outros';
+    const badgeC=cat==='salary'?'salary':cat==='advance'?'advance':'once';
+    const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':`<span class="badge ${badgeC}">${catLabel}</span>`;
+    const dBadge=e.byDani?'<span class="badge adv-dani">&#128149; pela Dani</span>':'';
+    const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
+    return`<div class="item">
+      <div class="dot ${dotC}"></div>
+      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${dBadge}${inh}</div></div>
+      <span class="item-amount c-amber">${fmt(e.value)}</span>
+      <div class="item-actions"><button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button></div>
+    </div>`;
+  }).join('');
+}
+
+function renderReimbList(elId,reimbs,scope){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!reimbs.length){el.innerHTML='<div class="empty">Nenhum ressarcimento registrado</div>';return;}
+  el.innerHTML=reimbs.map(r=>`
+    <div class="reimb-item">
+      <div class="reimb-dot"></div>
+      <div class="reimb-info">${r.note?esc(r.note):'Ressarcimento'} &mdash; ${r.date||''}</div>
+      <div class="reimb-value">${fmt(r.value)}</div>
+      <button class="reimb-del" onclick="removeReimb('${scope}','${r.id}')">&#215;</button>
+    </div>`).join('');
+}
+
+function renderEmpPage(emp,idx,all){
+  const page=document.getElementById('page-'+emp.id);
+  const items=all.filter(e=>e.type.startsWith(emp.id+'_'));
+  const adv=items.filter(e=>e.type===emp.id+'_advance');
+  const nonAdv=items.filter(e=>e.type!==emp.id+'_advance');
+  const ta=adv.reduce((s,e)=>s+ +e.value,0);
+  const ts=nonAdv.reduce((s,e)=>s+ +e.value,0);
+  const pagar=Math.max(0,ts-ta);
+  const excesso=ta>ts?ta-ts:0;
+  const reimbs=getReimbs(emp.id,cy,cm);
+  const heroColor=emp.color==='amber'?'c-amber':'c-teal';
+  page.innerHTML=`
+    <div class="emp-hero ${emp.color}">
+      <div><div class="emp-hero-label ${heroColor}">Sal + Outros</div><div class="emp-hero-value ${heroColor}">${fmt(ts)}</div></div>
+      <div><div class="emp-hero-label ${heroColor}">Adiantamentos</div><div class="emp-hero-value ${heroColor}" style="text-decoration:line-through;opacity:.6">${fmt(ta)}</div></div>
+      <div><div class="emp-hero-label c-green">&#9654; A pagar</div><div class="emp-hero-value c-green">${fmt(pagar)}</div></div>
+    </div>
+    ${excesso>0?`<div style="background:var(--red-bg);border:0.5px solid rgba(239,68,68,.3);border-radius:var(--radius-lg);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:12px">&#9888; Adiantamentos superam o salário em <strong>${fmt(excesso)}</strong>. Descontar no próximo mês.</div>`:''}
+    <div class="section-header">
+      <span class="section-title">&#127968; ${esc(emp.name)}</span>
+      <button class="btn-add" onclick="openEmpModal(${idx})">&#43; Lançar</button>
+    </div>
+    <div id="list-emp${idx}-all"></div>
+    <div class="section-header"><span class="section-title">&#10003; Pagamentos realizados</span></div>
+    <div class="reimb-list" id="list-emp${idx}-reimb"></div>
+    <div style="text-align:right;margin-top:10px">
+      <button class="btn-green" onclick="openReimbModal('${emp.id}')">&#10003; Registrar pagamento</button>
+    </div>`;
+  renderEmpList('list-emp'+idx+'-all',items);
+  renderReimbList('list-emp'+idx+'-reimb',reimbs,emp.id);
+}
+
+// Marcar como pago
+function markPaid(id){ togglePaid(id,cy,cm); render(); }
+
+// ── NAVEGAÇÃO ──
+function changeMonth(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}render();}
+const TAB_IDS=['visao','lancar','dani','emp0','emp1','grafico'];
+function setTab(t){
+  document.querySelectorAll('#main-tabs .tab').forEach((el,i)=>el.classList.toggle('active',TAB_IDS[i]===t));
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  if(t==='grafico')renderChart();
+}
+
+// ── MODAL: LANÇAMENTO GERAL ──
+let eType='income',eRec=true;
+function openEntryModal(type){
+  eType=type||'income';eRec=true;
+  document.getElementById('e-desc').value='';document.getElementById('e-val').value='';
+  ['e-err-desc','e-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  setEType(eType);setERec(true);
+  document.getElementById('overlay-entry').classList.add('open');
+  setTimeout(()=>document.getElementById('e-desc').focus(),60);
+}
+function closeEntryModal(){document.getElementById('overlay-entry').classList.remove('open');}
+function setEType(t){eType=t;['income','expense','dani'].forEach(x=>document.getElementById('etype-'+x).classList.toggle('sel',x===t));}
+function setERec(r){eRec=r;document.getElementById('e-rec-yes').classList.toggle('sel',r);document.getElementById('e-rec-no').classList.toggle('sel',!r);}
+function saveEntry(){
+  const desc=document.getElementById('e-desc').value.trim();
+  const value=parseFloat(document.getElementById('e-val').value);
+  let ok=true;
+  document.getElementById('e-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
+  document.getElementById('e-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
+  if(!ok)return;
+  addEntry(cy,cm,{id:uid(),type:eType,desc,value,recurrent:eRec});
+  closeEntryModal();render();
+}
+
+// ── MODAL: DOMÉSTICA ──
+let empIdx=0,empCat='salary',empRec=false,empByDani=false;
+function openEmpModal(idx){
+  empIdx=idx;empCat='salary';empRec=false;empByDani=false;
+  document.getElementById('emp-modal-title').textContent='Lançar — '+EMPS[idx].name;
+  document.getElementById('emp-desc').value='';document.getElementById('emp-val').value='';
+  ['emp-err-desc','emp-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  setEmpCat('salary');setEmpRec(false);setEmpByDani(false);
+  document.getElementById('overlay-emp').classList.add('open');
+  setTimeout(()=>document.getElementById('emp-desc').focus(),60);
+}
+function closeEmpModal(){document.getElementById('overlay-emp').classList.remove('open');}
+function setEmpCat(c){
+  empCat=c;
+  ['salary','advance','other'].forEach(x=>document.getElementById('emp-cat-'+x).classList.toggle('sel',x===c));
+  document.getElementById('emp-dani-section').style.display=c==='advance'?'block':'none';
+  if(c!=='advance'){empByDani=false;setEmpByDani(false);}
+}
+function setEmpRec(r){empRec=r;document.getElementById('emp-rec-yes').classList.toggle('sel',r);document.getElementById('emp-rec-no').classList.toggle('sel',!r);}
+function setEmpByDani(v){
+  empByDani=v;
+  document.getElementById('emp-dani-no').classList.toggle('sel',!v);
+  document.getElementById('emp-dani-yes').classList.toggle('sel-purple',v);
+  document.getElementById('emp-dani-yes').classList.toggle('sel',false);
+}
+function saveEmpEntry(){
+  const desc=document.getElementById('emp-desc').value.trim();
+  const value=parseFloat(document.getElementById('emp-val').value);
+  let ok=true;
+  document.getElementById('emp-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
+  document.getElementById('emp-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
+  if(!ok)return;
+  const empId=EMPS[empIdx].id;
+  addEntry(cy,cm,{id:uid(),type:empId+'_'+empCat,desc,value,recurrent:empRec,byDani:empByDani});
+  if(empByDani&&empCat==='advance'){
+    addEntry(cy,cm,{id:uid(),type:'dani',desc:'Adiantamento '+EMPS[empIdx].name+' — '+desc,value,recurrent:empRec});
+  }
+  closeEmpModal();render();
+}
+
+// ── MODAL: RESSARCIMENTO ──
+let reimbScope='dani';
+function openReimbModal(scope){
+  reimbScope=scope;
+  document.getElementById('r-val').value='';document.getElementById('r-note').value='';
+  document.getElementById('r-err').classList.remove('show');
+  document.getElementById('overlay-reimb').classList.add('open');
+  setTimeout(()=>document.getElementById('r-val').focus(),60);
+}
+function closeReimbModal(){document.getElementById('overlay-reimb').classList.remove('open');}
+function saveReimb(){
+  const value=parseFloat(document.getElementById('r-val').value);
+  document.getElementById('r-err').classList.toggle('show',!value||value<=0);
+  if(!value||value<=0)return;
+  const note=document.getElementById('r-note').value.trim();
+  addReimb(reimbScope,cy,cm,{id:uid(),value,note,date:today()});
+  closeReimbModal();render();
+}
+function removeReimb(scope,id){delReimb(scope,cy,cm,id);render();}
+
+// ── EXCLUSÃO ──
+let delTarget=null;
+function removeEntry(id,isRec){
+  if(!isRec){delAll(id);render();return;}
+  delTarget={id,y:cy,m:cm};
+  const o=findOrigin(id);
+  document.getElementById('del-desc').innerHTML='<strong>'+(o?esc(o.e.desc):'este lançamento')+'</strong>';
+  const mn=MONTHS[cm]+' '+cy;
+  document.getElementById('del-ml').textContent=mn;
+  document.getElementById('del-ml2').textContent=mn;
+  document.getElementById('overlay-del').classList.add('open');
+}
+function confirmDel(mode){
+  if(!delTarget)return;
+  const{id,y,m}=delTarget;
+  if(mode==='month')delMonthOnly(id,y,m);
+  else if(mode==='forward')delFromMonth(id,y,m);
+  else delAll(id);
+  closeDelModal();render();
+}
+function closeDelModal(){document.getElementById('overlay-del').classList.remove('open');delTarget=null;}
+
+// ── GRÁFICO com linha de saldo ──
+function calcTotals(y,m){
+  const e=getEntries(y,m);
+  const inc=e.filter(x=>x.type==='income').reduce((s,x)=>s+ +x.value,0);
+  const teG=e.filter(x=>x.type==='expense'||x.type==='dani').reduce((s,x)=>s+ +x.value,0);
+  const adv0=e.filter(x=>x.type==='emp0_advance').reduce((s,x)=>s+ +x.value,0);
+  const sal0=e.filter(x=>x.type.startsWith('emp0_')&&x.type!=='emp0_advance').reduce((s,x)=>s+ +x.value,0);
+  const adv1=e.filter(x=>x.type==='emp1_advance').reduce((s,x)=>s+ +x.value,0);
+  const sal1=e.filter(x=>x.type.startsWith('emp1_')&&x.type!=='emp1_advance').reduce((s,x)=>s+ +x.value,0);
+  const exp=teG+Math.max(0,sal0-adv0)+Math.max(0,sal1-adv1);
+  return{inc:parseFloat(inc.toFixed(2)),exp:parseFloat(exp.toFixed(2)),bal:parseFloat((inc-exp).toFixed(2))};
+}
+
+function renderChart(){
+  const labels=[],incD=[],expD=[],balD=[],balColors=[];
+  for(let i=5;i>=0;i--){
+    let m=cm-i,y=cy;if(m<0){m+=12;y--;}
+    labels.push(MONTHS[m].slice(0,3)+'/'+String(y).slice(-2));
+    const t=calcTotals(y,m);
+    incD.push(t.inc);expD.push(t.exp);balD.push(t.bal);
+    balColors.push(t.bal>=0?'#60a5fa':'#f87171');
+  }
+  const ctx=document.getElementById('barChart').getContext('2d');
+  if(chartObj)chartObj.destroy();
+  chartObj=new Chart(ctx,{
+    data:{
+      labels,
+      datasets:[
+        {type:'bar',  label:'Receitas', data:incD, backgroundColor:'rgba(16,185,129,.75)', borderRadius:4, order:2},
+        {type:'bar',  label:'Despesas', data:expD, backgroundColor:'rgba(239,68,68,.75)',  borderRadius:4, order:2},
+        {type:'line', label:'Saldo',    data:balD,
+          borderColor: ctx=>{
+            // gradiente simples: usar cor por ponto
+            return '#60a5fa';
+          },
+          pointBackgroundColor: balColors,
+          pointBorderColor: balColors,
+          pointRadius:6, pointHoverRadius:8,
+          borderWidth:2,
+          borderColor:'rgba(96,165,250,.5)',
+          fill:false, tension:.3, order:1,
+          segment:{
+            borderColor: ctx => {
+              const v=ctx.p1.parsed.y;
+              return v>=0?'rgba(96,165,250,.6)':'rgba(248,113,113,.6)';
+            }
+          }
+        }
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              return ctx.dataset.label+': '+fmt(ctx.parsed.y);
+            }
+          }
+        }
+      },
+      scales:{
+        y:{
+          beginAtZero:false,
+          grid:{color:'rgba(255,255,255,.06)'},
+          ticks:{color:'#9da3b4',callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')},
+          border:{color:'rgba(255,255,255,.1)'}
+        },
+        x:{
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{color:'#9da3b4',autoSkip:false},
+          border:{color:'rgba(255,255,255,.1)'}
+        }
+      }
+    }
+  });
+}
+
+// ── BACKUP ──
+function exportDB(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='financas_pais_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  URL.revokeObjectURL(url);
+}
+function importDB(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const p=JSON.parse(e.target.result);
+      if(!p.entries||!p.reimbs)throw new Error();
+      if(!confirm('Isso substituirá todos os dados atuais. Confirmar?'))return;
+      DB=p;if(!DB.paid)DB.paid={};
+      dbSave();render();alert('Backup importado com sucesso!');
+    }catch(err){alert('Arquivo inválido. Use um backup gerado por este sistema.');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEntryModal();closeEmpModal();closeReimbModal();closeDelModal();}});
+render();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registrado:', r.scope))
+      .catch(e => console.log('SW erro:', e));
+  });
+}
+</script>
+</body>
+</html>
