@@ -31,17 +31,19 @@
     --radius: 8px; --radius-lg: 12px;
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
-  .app { max-width: 680px; margin: 0 auto; padding: 24px 16px 56px; }
+  .app { max-width: 680px; margin: 0 auto; padding: 24px 16px 90px; }
 
   /* ── Header ── */
   .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; gap:10px; flex-wrap:wrap; }
   .header h1 { font-size:20px; font-weight:600; color:var(--text); }
   .header-btns { display:flex; gap:7px; }
 
-  /* ── Tabs ── */
-  .tabs { display:flex; gap:4px; background:var(--bg2); border-radius:var(--radius); padding:4px; flex-wrap:wrap; margin-bottom:20px; }
-  .tab { flex:1; min-width:60px; padding:7px 4px; border-radius:6px; border:none; background:transparent; cursor:pointer; font-size:11px; color:var(--text2); font-weight:400; white-space:nowrap; text-align:center; transition:background .15s; }
-  .tab.active { background:var(--bg4); color:var(--text); font-weight:600; }
+  /* ── Bottom Nav Bar ── */
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:0.5px solid var(--border2); display:flex; z-index:200; padding-bottom:env(safe-area-inset-bottom); }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 2px 6px; border:none; background:transparent; cursor:pointer; color:var(--text3); transition:color .15s; gap:3px; min-width:0; }
+  .bnav-item.active { color:var(--green); }
+  .bnav-icon { font-size:22px; line-height:1; }
+  .bnav-label { font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:58px; }
 
   /* ── Mês ── */
   .month-nav { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
@@ -106,6 +108,8 @@
 
   .item-del { background:transparent; border:none; cursor:pointer; color:var(--text3); font-size:15px; padding:3px 5px; border-radius:5px; }
   .item-del:hover { background:var(--red-bg); color:var(--red); }
+  .item-edit { background:transparent; border:none; cursor:pointer; color:var(--text3); font-size:14px; padding:3px 5px; border-radius:5px; }
+  .item-edit:hover { background:var(--blue-bg); color:var(--blue); }
   .empty { text-align:center; padding:20px; color:var(--text3); font-size:13px; border:0.5px dashed var(--border2); border-radius:var(--radius-lg); }
 
   /* ── Hero Dani ── */
@@ -187,15 +191,6 @@
     </div>
   </div>
 
-  <div class="tabs" id="main-tabs">
-    <button class="tab active" onclick="setTab('visao')">&#128200; Visão Geral</button>
-    <button class="tab" onclick="setTab('lancar')">&#43; Lançar</button>
-    <button class="tab" onclick="setTab('dani')">&#128149; Dani</button>
-    <button class="tab" onclick="setTab('emp0')">&#127968; Maria</button>
-    <button class="tab" onclick="setTab('emp1')">&#127968; Emp. 2</button>
-    <button class="tab" onclick="setTab('grafico')">&#128202; Gráfico</button>
-  </div>
-
   <div class="month-nav">
     <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
     <span class="month-label" id="monthLabel"></span>
@@ -230,16 +225,14 @@
 
   <!-- ABA DANI -->
   <div id="page-dani" class="page">
-    <div class="hero-grid">
+    <div class="hero-grid" style="grid-template-columns:1fr">
       <div><div class="hero-item-label">Adiantado este mês</div><div class="hero-item-value c-purple" id="d-total">R$ 0</div></div>
-      <div><div class="hero-item-label">Já ressarcido</div><div class="hero-item-value c-green" id="d-paid">R$ 0</div></div>
-      <div><div class="hero-item-label">A ressarcir</div><div class="hero-item-value c-red" id="d-pending">R$ 0</div></div>
-      <div class="hero-btn-wrap"><button class="btn-green" onclick="openReimbModal('dani')">&#10003; Registrar ressarcimento</button></div>
     </div>
-    <div class="section-header"><span class="section-title">&#128149; Adiantamentos</span></div>
+    <div class="section-header">
+      <span class="section-title">&#128149; Adiantamentos</span>
+      <button class="btn-add" onclick="openEntryModal('dani')">&#43; Lançar</button>
+    </div>
     <div class="list" id="list-dani"></div>
-    <div class="section-header"><span class="section-title">&#10003; Ressarcimentos</span></div>
-    <div class="reimb-list" id="list-dani-reimb"></div>
   </div>
 
   <!-- ABAS EMPREGADAS -->
@@ -256,6 +249,34 @@
     </div>
   </div>
 </div>
+
+<!-- BOTTOM NAV BAR -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bnav-item active" id="bnav-visao" onclick="setTab('visao')">
+    <span class="bnav-icon">&#128200;</span>
+    <span class="bnav-label">Visão Geral</span>
+  </button>
+  <button class="bnav-item" id="bnav-lancar" onclick="setTab('lancar')">
+    <span class="bnav-icon">&#10133;</span>
+    <span class="bnav-label">Lançar</span>
+  </button>
+  <button class="bnav-item" id="bnav-dani" onclick="setTab('dani')">
+    <span class="bnav-icon">&#128149;</span>
+    <span class="bnav-label">Dani</span>
+  </button>
+  <button class="bnav-item" id="bnav-emp0" onclick="setTab('emp0')">
+    <span class="bnav-icon">&#127968;</span>
+    <span class="bnav-label">Maria</span>
+  </button>
+  <button class="bnav-item" id="bnav-emp1" onclick="setTab('emp1')">
+    <span class="bnav-icon">&#127968;</span>
+    <span class="bnav-label">Emp. 2</span>
+  </button>
+  <button class="bnav-item" id="bnav-grafico" onclick="setTab('grafico')">
+    <span class="bnav-icon">&#128202;</span>
+    <span class="bnav-label">Gráfico</span>
+  </button>
+</nav>
 
 <!-- MODAL: lançamento geral -->
 <div class="overlay" id="overlay-entry" onclick="if(event.target===this)closeEntryModal()">
@@ -342,6 +363,28 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeReimbModal()">Cancelar</button>
       <button class="btn-green"  onclick="saveReimb()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: editar lançamento -->
+<div class="overlay" id="overlay-edit" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-title">&#9998; Editar Lançamento</div>
+    <label class="form-label" for="ed-desc">Descrição</label>
+    <input type="text" id="ed-desc" placeholder="Descrição…"/>
+    <div class="error-msg" id="ed-err-desc">Informe uma descrição.</div>
+    <label class="form-label" for="ed-val">Valor (R$)</label>
+    <input type="text" id="ed-val" placeholder="0,00" inputmode="numeric" oninput="maskMoney(this)" onpaste="setTimeout(()=>maskMoney(this),0)"/>
+    <div class="error-msg" id="ed-err-val">Informe um valor válido.</div>
+    <label class="form-label" for="ed-due">Dia de vencimento <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="text" id="ed-due" placeholder="ex: 10" inputmode="numeric" maxlength="2" style="width:80px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)"/>
+      <span style="font-size:12px;color:var(--text3)">de cada mês</span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn-save"   onclick="saveEdit()">Salvar</button>
     </div>
   </div>
 </div>
@@ -457,25 +500,38 @@ function render(){
   const bel=document.getElementById('m-balance');
   bel.textContent=fmt(bal);bel.className='metric-value '+(bal>=0?'c-blue':'c-red');
 
-  // subtotais
-  const row=document.getElementById('subtotal-row');row.innerHTML='';
-  const te0=emp0.reduce((s,e)=>s+ +e.value,0);
-  const te1=emp1.reduce((s,e)=>s+ +e.value,0);
-  if(td>0) row.innerHTML+=`<div class="subtotal-chip purple"><div class="subtotal-label c-purple">&#128149; Adiantamentos da Dani<small>Incluídos nas despesas</small></div><div class="subtotal-value c-purple">${fmt(td)}</div></div>`;
-  if(te0>0) row.innerHTML+=`<div class="subtotal-chip amber"><div class="subtotal-label c-amber">&#127968; ${esc(EMPS[0].name)}<small>Sal+Outros: ${fmt(ts0)} &bull; Adiant.: ${fmt(ta0)} &bull; A pagar: ${fmt(pagar0)}</small></div><div class="subtotal-value c-amber">${fmt(pagar0)}</div></div>`;
-  if(te1>0) row.innerHTML+=`<div class="subtotal-chip teal"><div class="subtotal-label c-teal">&#127968; ${esc(EMPS[1].name)}<small>Sal+Outros: ${fmt(ts1)} &bull; Adiant.: ${fmt(ta1)} &bull; A pagar: ${fmt(pagar1)}</small></div><div class="subtotal-value c-teal">${fmt(pagar1)}</div></div>`;
+  // sem chips de subtotal — totais já estão embutidos no valor de despesas
+  document.getElementById('subtotal-row').innerHTML='';
 
   renderIncomeList('list-income',inc,paid);
-  renderExpenseList('list-expense',exp,paid);
 
-  // dani
-  const dr=getReimbs('dani',cy,cm);
-  const dpaid=dr.reduce((s,r)=>s+ +r.value,0);
+  // Montar lista unificada de despesas: comuns + somatório Dani + saldo a pagar de cada empregada
+  const expAll = [
+    ...exp,
+    ...(td>0 ? [{
+      _synthetic:true, _tag:'dani',
+      id:'__dani_'+key(cy,cm),
+      desc:'Adiantamentos da Dani',
+      value: td, recurrent:false, dueDay:null
+    }] : []),
+    ...(pagar0>0 ? [{
+      _synthetic:true, _tag:'emp0',
+      id:'__emp0_'+key(cy,cm),
+      desc: EMPS[0].name + ' — a pagar',
+      value: pagar0, recurrent:false, dueDay:null
+    }] : []),
+    ...(pagar1>0 ? [{
+      _synthetic:true, _tag:'emp1',
+      id:'__emp1_'+key(cy,cm),
+      desc: EMPS[1].name + ' — a pagar',
+      value: pagar1, recurrent:false, dueDay:null
+    }] : [])
+  ];
+  renderExpenseList('list-expense', expAll, paid);
+
+  // dani — atualiza painel da aba
   document.getElementById('d-total').textContent=fmt(td);
-  document.getElementById('d-paid').textContent=fmt(dpaid);
-  document.getElementById('d-pending').textContent=fmt(Math.max(0,td-dpaid));
   renderSimpleList('list-dani',dani,'dani');
-  renderReimbList('list-dani-reimb',dr,'dani');
 
   EMPS.forEach((emp,i)=>renderEmpPage(emp,i,all));
   renderChart();
@@ -494,6 +550,7 @@ function renderIncomeList(elId,items,paid){
       <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${dueBadge}${inh}</div></div>
       <span class="item-amount c-green">${fmt(e.value)}</span>
       <div class="item-actions">
+        <button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>
         <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
       </div>
     </div>`;
@@ -506,17 +563,43 @@ function renderExpenseList(elId,items,paid){
   if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
   el.innerHTML=items.map(e=>{
     const isPaid=paid.has(e.id);
-    const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const tag=e._tag||'expense';
+
+    // Dot e cor do valor por tipo
+    const dotClass = tag==='dani'?'dani': tag==='emp0'?'advance': tag==='emp1'?'salary':'expense';
+    const amtClass = tag==='dani'?'c-purple': (tag==='emp0'||tag==='emp1')?'c-amber':'c-red';
+
+    // Badge de origem
+    const originBadge = tag==='dani'
+      ? '<span class="badge dani">&#128149; Dani</span>'
+      : tag==='emp0'
+        ? `<span class="badge advance">&#127968; ${esc(EMPS[0].name)}</span>`
+        : tag==='emp1'
+          ? `<span class="badge salary">&#127968; ${esc(EMPS[1].name)}</span>`
+          : '';
+
+    const rec = e._synthetic ? ''
+      : e.recurrent
+        ? '<span class="badge rec">&#128257; Recorrente</span>'
+        : '<span class="badge once">&#128197; Única vez</span>';
     const paidBadge=isPaid?'<span class="badge done">&#10003; Pago</span>':'';
     const dueBadge=e.dueDay?`<span style="font-size:10px;color:var(--text3)">&#128197; vence dia ${e.dueDay}</span>`:'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
+
+    // Sintéticos (saldo empregada) não têm editar/excluir — só Pagar
+    const editBtn  = e._synthetic?'': `<button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>`;
+    const delBtn   = e._synthetic?'': `<button class="item-del"  onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>`;
+
     return`<div class="item${isPaid?' paid-item':''}">
-      <div class="dot expense"></div>
-      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${paidBadge}${dueBadge}${inh}</div></div>
-      <span class="item-amount c-red">${fmt(e.value)}</span>
+      <div class="dot ${dotClass}"></div>
+      <div class="item-info">
+        <div class="item-name">${esc(e.desc)}</div>
+        <div class="item-meta">${originBadge}${rec}${paidBadge}${dueBadge}${inh}</div>
+      </div>
+      <span class="item-amount ${amtClass}">${fmt(e.value)}</span>
       <div class="item-actions">
-        <button class="btn-paid${isPaid?' is-paid':''}" onclick="markPaid('${e.id}')" title="${isPaid?'Desmarcar como pago':'Marcar como pago'}">${isPaid?'&#10003; Pago':'Pagar'}</button>
-        <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
+        <button class="btn-paid${isPaid?' is-paid':''}" onclick="markPaid('${e.id}')" title="${isPaid?'Desmarcar':'Marcar como pago'}">${isPaid?'&#10003; Pago':'Pagar'}</button>
+        ${editBtn}${delBtn}
       </div>
     </div>`;
   }).join('');
@@ -526,15 +609,24 @@ function renderSimpleList(elId,items,dotClass){
   const el=document.getElementById(elId);
   if(!el)return;
   if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
+  const paid=getPaid(cy,cm);
   el.innerHTML=items.map(e=>{
-    const amt_cls=dotClass==='dani'?'c-purple':'c-red';
+    const isPaid=paid.has(e.id);
     const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':'<span class="badge once">&#128197; Única vez</span>';
+    const paidBadge=isPaid?'<span class="badge done">&#10003; Pago</span>':'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
-    return`<div class="item">
+    return`<div class="item${isPaid?' paid-item':''}">
       <div class="dot ${dotClass}"></div>
-      <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${inh}</div></div>
-      <span class="item-amount ${amt_cls}">${fmt(e.value)}</span>
-      <div class="item-actions"><button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button></div>
+      <div class="item-info">
+        <div class="item-name">${esc(e.desc)}</div>
+        <div class="item-meta">${rec}${paidBadge}${inh}</div>
+      </div>
+      <span class="item-amount c-purple">${fmt(e.value)}</span>
+      <div class="item-actions">
+        <button class="btn-paid${isPaid?' is-paid':''}" onclick="markPaid('${e.id}')" title="${isPaid?'Desmarcar':'Marcar como pago'}">${isPaid?'&#10003; Pago':'Pagar'}</button>
+        <button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>
+        <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -555,7 +647,10 @@ function renderEmpList(elId,items){
       <div class="dot ${dotC}"></div>
       <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${dBadge}${inh}</div></div>
       <span class="item-amount c-amber">${fmt(e.value)}</span>
-      <div class="item-actions"><button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button></div>
+      <div class="item-actions">
+        <button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>
+        <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -595,14 +690,8 @@ function renderEmpPage(emp,idx,all){
       <span class="section-title">&#127968; ${esc(emp.name)}</span>
       <button class="btn-add" onclick="openEmpModal(${idx})">&#43; Lançar</button>
     </div>
-    <div id="list-emp${idx}-all"></div>
-    <div class="section-header"><span class="section-title">&#10003; Pagamentos realizados</span></div>
-    <div class="reimb-list" id="list-emp${idx}-reimb"></div>
-    <div style="text-align:right;margin-top:10px">
-      <button class="btn-green" onclick="openReimbModal('${emp.id}')">&#10003; Registrar pagamento</button>
-    </div>`;
+    <div id="list-emp${idx}-all"></div>`;
   renderEmpList('list-emp'+idx+'-all',items);
-  renderReimbList('list-emp'+idx+'-reimb',reimbs,emp.id);
 }
 
 // Marcar como pago
@@ -612,7 +701,9 @@ function markPaid(id){ togglePaid(id,cy,cm); render(); }
 function changeMonth(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}render();}
 const TAB_IDS=['visao','lancar','dani','emp0','emp1','grafico'];
 function setTab(t){
-  document.querySelectorAll('#main-tabs .tab').forEach((el,i)=>el.classList.toggle('active',TAB_IDS[i]===t));
+  document.querySelectorAll('.bnav-item').forEach(el=>el.classList.remove('active'));
+  const bnav=document.getElementById('bnav-'+t);
+  if(bnav)bnav.classList.add('active');
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+t).classList.add('active');
   if(t==='grafico')renderChart();
@@ -722,6 +813,61 @@ function saveReimb(){
   closeReimbModal();render();
 }
 function removeReimb(scope,id){delReimb(scope,cy,cm,id);render();}
+
+// ── EDIÇÃO ──
+let editTarget=null;
+function openEditModal(id){
+  const o=findOrigin(id);
+  if(!o)return;
+  editTarget=id;
+  const e=o.e;
+  document.getElementById('ed-desc').value=e.desc||'';
+  // formatar valor existente com máscara
+  const valEl=document.getElementById('ed-val');
+  valEl.value=Number(e.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ed-due').value=e.dueDay||'';
+  ['ed-err-desc','ed-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  document.getElementById('overlay-edit').classList.add('open');
+  setTimeout(()=>document.getElementById('ed-desc').focus(),60);
+}
+function closeEditModal(){document.getElementById('overlay-edit').classList.remove('open');editTarget=null;}
+function saveEdit(){
+  const desc=document.getElementById('ed-desc').value.trim();
+  const value=parseMoney(document.getElementById('ed-val'));
+  const dueRaw=document.getElementById('ed-due').value.trim();
+  const dueDay=dueRaw?parseInt(dueRaw,10):null;
+  let ok=true;
+  document.getElementById('ed-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
+  document.getElementById('ed-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
+  if(!ok)return;
+
+  const o=findOrigin(editTarget);
+  if(!o){closeEditModal();return;}
+  const curKey=key(cy,cm);
+  const origKey=o.k;
+  const idx=DB.entries[origKey].findIndex(e=>e.id===editTarget);
+  if(idx<0){closeEditModal();return;}
+  const orig=DB.entries[origKey][idx];
+
+  if(orig.recurrent && origKey!==curKey){
+    // É recorrente e herdado: criar exceção — pula o mês original e insere cópia editada neste mês
+    if(!orig.skips)orig.skips=[];
+    orig.skips.push(curKey);
+    // Inserir versão editada somente neste mês (não recorrente a partir daqui)
+    const copy={...orig, id:uid(), recurrent:false, skips:undefined, endBefore:undefined,
+                desc, value, dueDay:dueDay||null};
+    delete copy.skips; delete copy.endBefore; delete copy.inherited;
+    if(!DB.entries[curKey])DB.entries[curKey]=[];
+    DB.entries[curKey].push(copy);
+  } else {
+    // Lançamento próprio deste mês: editar direto
+    DB.entries[origKey][idx].desc=desc;
+    DB.entries[origKey][idx].value=value;
+    DB.entries[origKey][idx].dueDay=dueDay||null;
+  }
+  dbSave();
+  closeEditModal();render();
+}
 
 // ── EXCLUSÃO ──
 let delTarget=null;
@@ -847,7 +993,7 @@ function importDB(event){
   reader.readAsText(file);event.target.value='';
 }
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEntryModal();closeEmpModal();closeReimbModal();closeDelModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeEntryModal();closeEmpModal();closeReimbModal();closeEditModal();closeDelModal();}});
 render();
 </script>
 <script>
