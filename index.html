@@ -556,8 +556,37 @@ function findOrigin(id){for(const k of Object.keys(DB.entries)){const e=(DB.entr
 function addEntry(y,m,e){const k=key(y,m);if(!DB.entries[k])DB.entries[k]=[];DB.entries[k].push(e);dbSave();}
 function addReimb(scope,y,m,r){if(!DB.reimbs[scope])DB.reimbs[scope]={};const k=key(y,m);if(!DB.reimbs[scope][k])DB.reimbs[scope][k]=[];DB.reimbs[scope][k].push(r);dbSave();}
 function delAll(id){for(const k of Object.keys(DB.entries))DB.entries[k]=(DB.entries[k]||[]).filter(e=>e.id!==id);dbSave();}
-function delMonthOnly(id,y,m){const o=findOrigin(id);if(!o)return;const idx=DB.entries[o.k].findIndex(e=>e.id===id);if(idx<0)return;if(!DB.entries[o.k][idx].skips)DB.entries[o.k][idx].skips=[];DB.entries[o.k][idx].skips.push(key(y,m));dbSave();}
-function delFromMonth(id,y,m){const o=findOrigin(id);if(!o)return;const idx=DB.entries[o.k].findIndex(e=>e.id===id);if(idx<0)return;DB.entries[o.k][idx].endBefore=key(y,m);dbSave();}
+function delMonthOnly(id,y,m){
+  const curKey=key(y,m);
+  const o=findOrigin(id);
+  if(!o)return;
+  const idx=DB.entries[o.k].findIndex(e=>e.id===id);
+  if(idx<0)return;
+  if(o.k===curKey){
+    // Lançamento cadastrado neste mesmo mês: remover diretamente
+    DB.entries[o.k].splice(idx,1);
+  } else {
+    // Herdado de mês anterior: adicionar skip para este mês
+    if(!DB.entries[o.k][idx].skips)DB.entries[o.k][idx].skips=[];
+    DB.entries[o.k][idx].skips.push(curKey);
+  }
+  dbSave();
+}
+function delFromMonth(id,y,m){
+  const curKey=key(y,m);
+  const o=findOrigin(id);
+  if(!o)return;
+  const idx=DB.entries[o.k].findIndex(e=>e.id===id);
+  if(idx<0)return;
+  if(o.k===curKey){
+    // Cadastrado neste mês: remover diretamente (encerra aqui)
+    DB.entries[o.k].splice(idx,1);
+  } else {
+    // Herdado: encerrar antes deste mês
+    DB.entries[o.k][idx].endBefore=curKey;
+  }
+  dbSave();
+}
 function delReimb(scope,y,m,id){const k=key(y,m);if(DB.reimbs[scope]&&DB.reimbs[scope][k])DB.reimbs[scope][k]=DB.reimbs[scope][k].filter(r=>r.id!==id);dbSave();}
 
 function fmt(v){return'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
