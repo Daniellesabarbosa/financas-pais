@@ -45,11 +45,14 @@
   .bnav-icon { font-size:22px; line-height:1; }
   .bnav-label { font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:58px; }
 
-  /* ── Mês ── */
-  .month-nav { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-  .nav-btn { width:34px; height:34px; border:0.5px solid var(--border2); background:var(--bg2); border-radius:var(--radius); cursor:pointer; font-size:17px; color:var(--text); display:flex; align-items:center; justify-content:center; }
-  .nav-btn:hover { background:var(--bg3); }
-  .month-label { font-size:16px; font-weight:500; min-width:160px; text-align:center; }
+  /* ── Navegação de mês ── */
+  .month-nav { display:flex; align-items:center; gap:0; margin-bottom:20px; background:var(--bg2); border-radius:var(--radius-lg); border:0.5px solid var(--border); overflow:hidden; user-select:none; touch-action:pan-y; }
+  .nav-btn { width:52px; height:56px; border:none; background:transparent; cursor:pointer; font-size:20px; color:var(--text2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s, color .15s; }
+  .nav-btn:hover { background:var(--bg3); color:var(--text); }
+  .nav-btn:active { background:var(--bg4); }
+  .month-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; height:56px; gap:1px; cursor:default; }
+  .month-label { font-size:18px; font-weight:600; color:var(--text); letter-spacing:-.2px; line-height:1.2; }
+  .year-label { font-size:12px; color:var(--text3); font-weight:400; }
 
   /* ── Métricas ── */
   .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
@@ -59,7 +62,35 @@
   .c-green { color:var(--green); } .c-red { color:var(--red); } .c-blue { color:var(--blue); }
   .c-purple{ color:var(--purple);} .c-amber { color:var(--amber);} .c-teal { color:var(--teal); }
 
-  /* ── Subtotais ── */
+  /* ── Dashboard Home ── */
+  .dash-greeting { font-size:13px; color:var(--text3); margin-bottom:4px; }
+  .dash-balance-card { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:14px; }
+  .dash-balance-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
+  .dash-balance-value { font-size:36px; font-weight:600; letter-spacing:-.5px; margin-bottom:16px; }
+  .dash-balance-value.positive { color:var(--green); }
+  .dash-balance-value.negative { color:var(--red); }
+  .dash-progress-label { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:5px; }
+  .dash-progress-track { background:var(--bg3); border-radius:99px; height:8px; overflow:hidden; }
+  .dash-progress-bar { height:100%; border-radius:99px; transition:width .6s ease; }
+  .dash-progress-bar.ok   { background:linear-gradient(90deg,var(--green-mid),var(--blue-mid)); }
+  .dash-progress-bar.warn { background:linear-gradient(90deg,var(--amber-mid),var(--red-mid)); }
+  .dash-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .dash-card { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px; }
+  .dash-card-label { font-size:11px; color:var(--text2); margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+  .dash-card-value { font-size:20px; font-weight:500; }
+  .dash-card-sub { font-size:11px; color:var(--text3); margin-top:3px; }
+  .dash-section-btn { width:100%; background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:12px 16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; color:var(--text2); font-size:13px; margin-bottom:8px; transition:background .15s; }
+  .dash-section-btn:hover { background:var(--bg3); }
+  .dash-section-btn .arrow { transition:transform .25s; font-size:11px; }
+  .dash-section-btn.open .arrow { transform:rotate(90deg); }
+  .dash-detail { display:none; margin-bottom:8px; }
+  .dash-detail.open { display:block; }
+  .dash-pending-list { display:flex; flex-direction:column; gap:5px; }
+  .dash-pending-item { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:10px 13px; display:flex; align-items:center; gap:10px; }
+  .dash-pending-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .dash-pending-name { flex:1; font-size:13px; color:var(--text); }
+  .dash-pending-due { font-size:11px; color:var(--text3); }
+  .dash-pending-val { font-size:13px; font-weight:500; color:var(--red); white-space:nowrap; }
   .subtotal-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
   .subtotal-chip { flex:1; min-width:140px; border-radius:var(--radius-lg); padding:10px 13px; display:flex; justify-content:space-between; align-items:center; }
   .subtotal-chip.purple { background:var(--purple-bg); border:0.5px solid rgba(139,92,246,.3); }
@@ -191,24 +222,75 @@
     </div>
   </div>
 
-  <div class="month-nav">
-    <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
-    <span class="month-label" id="monthLabel"></span>
-    <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+  <div class="month-nav" id="month-nav">
+    <button class="nav-btn" onclick="changeMonth(-1)" title="Mês anterior">&#8249;</button>
+    <div class="month-center">
+      <span class="month-label" id="monthLabel"></span>
+      <span class="year-label"  id="yearLabel"></span>
+    </div>
+    <button class="nav-btn" onclick="changeMonth(1)" title="Próximo mês">&#8250;</button>
   </div>
 
-  <!-- VISÃO GERAL -->
+  <!-- DASHBOARD HOME -->
   <div id="page-visao" class="page active">
-    <div class="metrics">
-      <div class="metric"><div class="metric-label">Receitas</div><div class="metric-value c-green" id="m-income">R$ 0</div></div>
-      <div class="metric"><div class="metric-label">Despesas</div><div class="metric-value c-red"   id="m-expense">R$ 0</div></div>
-      <div class="metric"><div class="metric-label">Saldo</div>   <div class="metric-value c-blue"  id="m-balance">R$ 0</div></div>
+    <div class="dash-greeting" id="dash-greeting"></div>
+
+    <!-- Card saldo + barra de progresso -->
+    <div class="dash-balance-card">
+      <div class="dash-balance-label">Saldo de <span id="dash-month"></span></div>
+      <div class="dash-balance-value" id="dash-balance">R$ 0</div>
+      <div class="dash-progress-label">
+        <span>Despesas <span id="dash-pct">0%</span> da receita</span>
+        <span id="dash-exp-of-inc"></span>
+      </div>
+      <div class="dash-progress-track">
+        <div class="dash-progress-bar ok" id="dash-bar" style="width:0%"></div>
+      </div>
     </div>
-    <div class="subtotal-row" id="subtotal-row"></div>
-    <div class="section-header"><span class="section-title">&#9650; Receitas</span></div>
-    <div class="list" id="list-income"></div>
-    <div class="section-header"><span class="section-title">&#9660; Despesas</span></div>
-    <div class="list" id="list-expense"></div>
+
+    <!-- Receitas e Despesas -->
+    <div class="dash-row">
+      <div class="dash-card">
+        <div class="dash-card-label">&#9650; Receitas</div>
+        <div class="dash-card-value c-green" id="dash-income">R$ 0</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">&#9660; Despesas</div>
+        <div class="dash-card-value c-red" id="dash-expense">R$ 0</div>
+      </div>
+    </div>
+
+    <!-- Cards Dani e Empregadas -->
+    <div class="dash-row" id="dash-extra-row"></div>
+
+    <!-- Seção expansível: despesas não pagas -->
+    <button class="dash-section-btn" id="btn-pending" onclick="toggleDashSection('pending')">
+      <span>&#9888; Despesas em aberto</span>
+      <span class="arrow">&#9654;</span>
+    </button>
+    <div class="dash-detail" id="detail-pending">
+      <div class="dash-pending-list" id="list-pending"></div>
+    </div>
+
+    <!-- Seção expansível: lista completa de receitas -->
+    <button class="dash-section-btn" id="btn-incomes" onclick="toggleDashSection('incomes')">
+      <span>&#9650; Ver receitas</span>
+      <span class="arrow">&#9654;</span>
+    </button>
+    <div class="dash-detail" id="detail-incomes">
+      <div class="list" id="list-income"></div>
+    </div>
+
+    <!-- Seção expansível: lista completa de despesas -->
+    <button class="dash-section-btn" id="btn-expenses" onclick="toggleDashSection('expenses')">
+      <span>&#9660; Ver todas as despesas</span>
+      <span class="arrow">&#9654;</span>
+    </button>
+    <div class="dash-detail" id="detail-expenses">
+      <div class="list" id="list-expense"></div>
+    </div>
+
+    <div class="subtotal-row" id="subtotal-row" style="display:none"></div>
   </div>
 
   <!-- LANÇAR -->
@@ -382,6 +464,18 @@
       <input type="text" id="ed-due" placeholder="ex: 10" inputmode="numeric" maxlength="2" style="width:80px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)"/>
       <span style="font-size:12px;color:var(--text3)">de cada mês</span>
     </div>
+    <label class="form-label" for="ed-month">Mês do lançamento</label>
+    <div style="display:flex;gap:8px">
+      <select id="ed-month" style="flex:1;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-size:14px;outline:none;">
+        <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+        <option value="2">Março</option><option value="3">Abril</option>
+        <option value="4">Maio</option><option value="5">Junho</option>
+        <option value="6">Julho</option><option value="7">Agosto</option>
+        <option value="8">Setembro</option><option value="9">Outubro</option>
+        <option value="10">Novembro</option><option value="11">Dezembro</option>
+      </select>
+      <input type="text" id="ed-year" placeholder="Ano" inputmode="numeric" maxlength="4" style="width:80px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
+    </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
       <button class="btn-save"   onclick="saveEdit()">Salvar</button>
@@ -473,7 +567,8 @@ function today(){return new Date().toLocaleDateString('pt-BR');}
 
 // ── RENDER ──
 function render(){
-  document.getElementById('monthLabel').textContent=MONTHS[cm]+' '+cy;
+  document.getElementById('monthLabel').textContent=MONTHS[cm];
+  document.getElementById('yearLabel').textContent=cy;
   const all=getEntries(cy,cm);
   const paid=getPaid(cy,cm);
 
@@ -495,39 +590,67 @@ function render(){
   const totalExp=te+td+pagar0+pagar1;
   const bal=ti-totalExp;
 
-  document.getElementById('m-income').textContent=fmt(ti);
-  document.getElementById('m-expense').textContent=fmt(totalExp);
-  const bel=document.getElementById('m-balance');
-  bel.textContent=fmt(bal);bel.className='metric-value '+(bal>=0?'c-blue':'c-red');
+  // ── Dashboard ──
+  const hora=new Date().getHours();
+  document.getElementById('dash-greeting').textContent=(hora<12?'Bom dia ☀️':hora<18?'Boa tarde 🌤️':'Boa noite 🌙');
+  document.getElementById('dash-month').textContent=MONTHS[cm]+' '+cy;
+  const balEl=document.getElementById('dash-balance');
+  balEl.textContent=fmt(bal);
+  balEl.className='dash-balance-value '+(bal>=0?'positive':'negative');
+  document.getElementById('dash-income').textContent=fmt(ti);
+  document.getElementById('dash-expense').textContent=fmt(totalExp);
 
-  // sem chips de subtotal — totais já estão embutidos no valor de despesas
-  document.getElementById('subtotal-row').innerHTML='';
+  // Barra de progresso
+  const pct=ti>0?Math.min(100,Math.round((totalExp/ti)*100)):0;
+  const bar=document.getElementById('dash-bar');
+  bar.style.width=pct+'%';
+  bar.className='dash-progress-bar '+(pct>=90?'warn':'ok');
+  document.getElementById('dash-pct').textContent=pct+'%';
+  document.getElementById('dash-exp-of-inc').textContent=fmt(totalExp)+' / '+fmt(ti);
 
-  renderIncomeList('list-income',inc,paid);
+  // Cards extras Dani + Empregadas (só se tiver valor)
+  const extraRow=document.getElementById('dash-extra-row');
+  let extraHtml='';
+  if(td>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--purple)">&#128149;</span> Dani</div><div class="dash-card-value c-purple">${fmt(td)}</div><div class="dash-card-sub">adiantamentos</div></div>`;
+  if(pagar0>0||pagar1>0){
+    if(pagar0>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--amber)">&#127968;</span> ${esc(EMPS[0].name)}</div><div class="dash-card-value c-amber">${fmt(pagar0)}</div><div class="dash-card-sub">a pagar</div></div>`;
+    if(pagar1>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--teal)">&#127968;</span> ${esc(EMPS[1].name)}</div><div class="dash-card-value c-teal">${fmt(pagar1)}</div><div class="dash-card-sub">a pagar</div></div>`;
+  }
+  extraRow.innerHTML=extraHtml;
 
-  // Montar lista unificada de despesas: comuns + somatório Dani + saldo a pagar de cada empregada
+  // Lista de despesas em aberto (não pagas)
   const expAll = [
     ...exp,
-    ...(td>0 ? [{
-      _synthetic:true, _tag:'dani',
-      id:'__dani_'+key(cy,cm),
-      desc:'Adiantamentos da Dani',
-      value: td, recurrent:false, dueDay:null
-    }] : []),
-    ...(pagar0>0 ? [{
-      _synthetic:true, _tag:'emp0',
-      id:'__emp0_'+key(cy,cm),
-      desc: EMPS[0].name + ' — a pagar',
-      value: pagar0, recurrent:false, dueDay:null
-    }] : []),
-    ...(pagar1>0 ? [{
-      _synthetic:true, _tag:'emp1',
-      id:'__emp1_'+key(cy,cm),
-      desc: EMPS[1].name + ' — a pagar',
-      value: pagar1, recurrent:false, dueDay:null
-    }] : [])
+    ...(td>0?[{_synthetic:true,_tag:'dani',id:'__dani_'+key(cy,cm),desc:'Adiantamentos da Dani',value:td,recurrent:false,dueDay:null}]:[]),
+    ...(pagar0>0?[{_synthetic:true,_tag:'emp0',id:'__emp0_'+key(cy,cm),desc:EMPS[0].name+' — a pagar',value:pagar0,recurrent:false,dueDay:null}]:[]),
+    ...(pagar1>0?[{_synthetic:true,_tag:'emp1',id:'__emp1_'+key(cy,cm),desc:EMPS[1].name+' — a pagar',value:pagar1,recurrent:false,dueDay:null}]:[])
   ];
-  renderExpenseList('list-expense', expAll, paid);
+  const pending=expAll.filter(e=>!paid.has(e.id));
+  const btnPending=document.getElementById('btn-pending');
+  btnPending.querySelector('span:first-child').innerHTML=
+    `&#9888; Despesas em aberto <span style="background:var(--red-bg);color:var(--red);font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px">${pending.length}</span>`;
+  const listPending=document.getElementById('list-pending');
+  if(!pending.length){
+    listPending.innerHTML='<div class="empty" style="margin-bottom:8px">&#10003; Tudo pago neste mês!</div>';
+  } else {
+    listPending.innerHTML=pending.map(e=>{
+      const tag=e._tag||'expense';
+      const dotCol=tag==='dani'?'var(--purple-mid)':tag==='emp0'?'var(--amber-mid)':tag==='emp1'?'var(--teal-mid)':'var(--red-mid)';
+      const due=e.dueDay?`<span class="dash-pending-due">dia ${e.dueDay}</span>`:'';
+      const editBtn=e._synthetic?'':`<button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>`;
+      const delBtn=e._synthetic?'':`<button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>`;
+      return`<div class="dash-pending-item">
+        <div class="dash-pending-dot" style="background:${dotCol}"></div>
+        <div class="dash-pending-name">${esc(e.desc)}${due}</div>
+        <div class="dash-pending-val">${fmt(e.value)}</div>
+        <button class="btn-paid" onclick="markPaid('${e.id}')" title="Marcar como pago">Pagar</button>
+        ${editBtn}${delBtn}
+      </div>`;
+    }).join('');
+  }
+
+  renderIncomeList('list-income',inc,paid);
+  renderExpenseList('list-expense',expAll,paid);
 
   // dani — atualiza painel da aba
   document.getElementById('d-total').textContent=fmt(td);
@@ -697,8 +820,43 @@ function renderEmpPage(emp,idx,all){
 // Marcar como pago
 function markPaid(id){ togglePaid(id,cy,cm); render(); }
 
+// ── DASHBOARD: expandir/recolher seções ──
+function toggleDashSection(id){
+  const btn=document.getElementById('btn-'+id);
+  const detail=document.getElementById('detail-'+id);
+  const isOpen=detail.classList.contains('open');
+  btn.classList.toggle('open',!isOpen);
+  detail.classList.toggle('open',!isOpen);
+}
+
 // ── NAVEGAÇÃO ──
 function changeMonth(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}render();}
+
+// ── SWIPE no navegador de mês ──
+(function(){
+  const nav=document.getElementById('month-nav');
+  let startX=0, startY=0, moved=false;
+  nav.addEventListener('touchstart',e=>{
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+    moved=false;
+  },{passive:true});
+  nav.addEventListener('touchmove',e=>{
+    const dx=e.touches[0].clientX-startX;
+    const dy=e.touches[0].clientY-startY;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>8) moved=true;
+  },{passive:true});
+  nav.addEventListener('touchend',e=>{
+    if(!moved) return;
+    const dx=e.changedTouches[0].clientX-startX;
+    if(Math.abs(dx)>40){
+      // animação leve de feedback
+      nav.style.opacity='0.6';
+      setTimeout(()=>{nav.style.opacity='1';},200);
+      changeMonth(dx<0?1:-1);
+    }
+  },{passive:true});
+})();
 const TAB_IDS=['visao','lancar','dani','emp0','emp1','grafico'];
 function setTab(t){
   document.querySelectorAll('.bnav-item').forEach(el=>el.classList.remove('active'));
@@ -821,11 +979,13 @@ function openEditModal(id){
   if(!o)return;
   editTarget=id;
   const e=o.e;
+  // Descobrir mês/ano de origem
+  const [oy,om]=o.k.split('_').map(Number);
   document.getElementById('ed-desc').value=e.desc||'';
-  // formatar valor existente com máscara
-  const valEl=document.getElementById('ed-val');
-  valEl.value=Number(e.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('ed-val').value=Number(e.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('ed-due').value=e.dueDay||'';
+  document.getElementById('ed-month').value=om;
+  document.getElementById('ed-year').value=oy;
   ['ed-err-desc','ed-err-val'].forEach(id=>document.getElementById(id).classList.remove('show'));
   document.getElementById('overlay-edit').classList.add('open');
   setTimeout(()=>document.getElementById('ed-desc').focus(),60);
@@ -836,31 +996,47 @@ function saveEdit(){
   const value=parseMoney(document.getElementById('ed-val'));
   const dueRaw=document.getElementById('ed-due').value.trim();
   const dueDay=dueRaw?parseInt(dueRaw,10):null;
+  const newM=parseInt(document.getElementById('ed-month').value,10);
+  const newY=parseInt(document.getElementById('ed-year').value,10);
   let ok=true;
   document.getElementById('ed-err-desc').classList.toggle('show',!desc);if(!desc)ok=false;
   document.getElementById('ed-err-val').classList.toggle('show',!value||value<=0);if(!value||value<=0)ok=false;
   if(!ok)return;
+  if(isNaN(newY)||newY<2000||newY>2100){alert('Ano inválido.');return;}
 
   const o=findOrigin(editTarget);
   if(!o){closeEditModal();return;}
-  const curKey=key(cy,cm);
   const origKey=o.k;
+  const [oy,om]=origKey.split('_').map(Number);
+  const curKey=key(cy,cm);
+  const newKey=key(newY,newM);
   const idx=DB.entries[origKey].findIndex(e=>e.id===editTarget);
   if(idx<0){closeEditModal();return;}
   const orig=DB.entries[origKey][idx];
 
-  if(orig.recurrent && origKey!==curKey){
-    // É recorrente e herdado: criar exceção — pula o mês original e insere cópia editada neste mês
+  // Mês mudou?
+  const monthChanged=(newY!==oy||newM!==om);
+
+  if(orig.recurrent && origKey!==curKey && !monthChanged){
+    // Recorrente herdado, mês não mudou — cria exceção só neste mês
     if(!orig.skips)orig.skips=[];
     orig.skips.push(curKey);
-    // Inserir versão editada somente neste mês (não recorrente a partir daqui)
-    const copy={...orig, id:uid(), recurrent:false, skips:undefined, endBefore:undefined,
-                desc, value, dueDay:dueDay||null};
-    delete copy.skips; delete copy.endBefore; delete copy.inherited;
+    const copy={...orig,id:uid(),recurrent:false,skips:undefined,endBefore:undefined,
+                desc,value,dueDay:dueDay||null};
+    delete copy.skips;delete copy.endBefore;delete copy.inherited;
     if(!DB.entries[curKey])DB.entries[curKey]=[];
     DB.entries[curKey].push(copy);
+  } else if(monthChanged){
+    // Mover lançamento para outro mês — remove do original e insere no novo
+    const entry={...orig,desc,value,dueDay:dueDay||null};
+    delete entry.inherited;
+    DB.entries[origKey].splice(idx,1);
+    if(!DB.entries[newKey])DB.entries[newKey]=[];
+    DB.entries[newKey].push(entry);
+    // Navegar para o mês de destino para confirmar
+    cy=newY; cm=newM;
   } else {
-    // Lançamento próprio deste mês: editar direto
+    // Lançamento próprio deste mês — editar direto
     DB.entries[origKey][idx].desc=desc;
     DB.entries[origKey][idx].value=value;
     DB.entries[origKey][idx].dueDay=dueDay||null;
