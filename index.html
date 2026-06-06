@@ -637,24 +637,41 @@ function render(){
   document.getElementById('dash-pct').textContent=pct+'%';
   document.getElementById('dash-exp-of-inc').textContent=fmt(totalExp)+' / '+fmt(ti);
 
-  // Cards extras Dani + Empregadas (só se tiver valor)
+  // Cards extras Dani + Empregadas — mostra custo total (sal+outros)
   const extraRow=document.getElementById('dash-extra-row');
   let extraHtml='';
   if(td>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--purple)">&#128149;</span> Dani</div><div class="dash-card-value c-purple">${fmt(td)}</div><div class="dash-card-sub">adiantamentos</div></div>`;
-  if(pagar0>0||pagar1>0){
-    if(pagar0>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--amber)">&#127968;</span> ${esc(EMPS[0].name)}</div><div class="dash-card-value c-amber">${fmt(pagar0)}</div><div class="dash-card-sub">a pagar</div></div>`;
-    if(pagar1>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--teal)">&#127968;</span> ${esc(EMPS[1].name)}</div><div class="dash-card-value c-teal">${fmt(pagar1)}</div><div class="dash-card-sub">a pagar</div></div>`;
-  }
+  if(ts0>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--amber)">&#127968;</span> ${esc(EMPS[0].name)}</div><div class="dash-card-value c-amber">${fmt(ts0)}</div><div class="dash-card-sub">custo total${ta0>0?' · adiant. '+fmt(ta0):''}</div></div>`;
+  if(ts1>0) extraHtml+=`<div class="dash-card"><div class="dash-card-label"><span style="color:var(--teal)">&#127968;</span> ${esc(EMPS[1].name)}</div><div class="dash-card-value c-teal">${fmt(ts1)}</div><div class="dash-card-sub">custo total${ta1>0?' · adiant. '+fmt(ta1):''}</div></div>`;
   extraRow.innerHTML=extraHtml;
 
-  // Lista de despesas em aberto (não pagas)
+  // Adiantamentos não-Dani de emp0 e emp1 (aparecem como pagos em "ver todas as despesas")
+  const adv0items=emp0.filter(e=>e.type==='emp0_advance'&&!e.byDani);
+  const adv1items=emp1.filter(e=>e.type==='emp1_advance'&&!e.byDani);
+
+  // Lista unificada de despesas
   const expAll = [
     ...exp,
     ...(td>0?[{_synthetic:true,_tag:'dani',id:'__dani_'+key(cy,cm),desc:'Adiantamentos da Dani',value:td,recurrent:false,dueDay:null}]:[]),
+    // Adiantamentos não-Dani: aparecem como já pagos, sem editar
+    ...adv0items.map(e=>({...e,_tag:'emp0',_advOnly:true})),
+    ...adv1items.map(e=>({...e,_tag:'emp1',_advOnly:true})),
     ...(pagar0>0?[{_synthetic:true,_tag:'emp0',id:'__emp0_'+key(cy,cm),desc:EMPS[0].name+' — a pagar',value:pagar0,recurrent:false,dueDay:null}]:[]),
     ...(pagar1>0?[{_synthetic:true,_tag:'emp1',id:'__emp1_'+key(cy,cm),desc:EMPS[1].name+' — a pagar',value:pagar1,recurrent:false,dueDay:null}]:[])
   ];
-  const pending=expAll.filter(e=>!paid.has(e.id));
+
+  // Marcar adiantamentos não-Dani como pagos automaticamente no estado local
+  adv0items.concat(adv1items).forEach(e=>{
+    if(!paid.has(e.id)){
+      const k=key(cy,cm);
+      if(!DB.paid[k])DB.paid[k]=[];
+      const s=new Set(DB.paid[k]);
+      s.add(e.id);
+      DB.paid[k]=Array.from(s);
+    }
+  });
+  const paidUpdated=getPaid(cy,cm);
+  const pending=expAll.filter(e=>!paidUpdated.has(e.id));
   const btnPending=document.getElementById('btn-pending');
   btnPending.querySelector('span:first-child').innerHTML=
     `&#9888; Despesas em aberto <span style="background:var(--red-bg);color:var(--red);font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px">${pending.length}</span>`;
@@ -678,8 +695,8 @@ function render(){
     }).join('');
   }
 
-  renderIncomeList('list-income',inc,paid);
-  renderExpenseList('list-expense',expAll,paid);
+  renderIncomeList('list-income',inc,paidUpdated);
+  renderExpenseList('list-expense',expAll,paidUpdated);
 
   // dani — atualiza painel da aba
   document.getElementById('d-total').textContent=fmt(td);
@@ -738,8 +755,9 @@ function renderExpenseList(elId,items,paid){
     const dueBadge=e.dueDay?`<span style="font-size:10px;color:var(--text3)">&#128197; vence dia ${e.dueDay}</span>`:'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
 
-    // Sintéticos (saldo empregada) não têm editar/excluir — só Pagar
-    const editBtn  = e._synthetic?'': `<button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>`;
+    // _advOnly = adiantamento não-Dani: aparece como pago, sem editar, só excluir na origem
+    const isAdvOnly=!!e._advOnly;
+    const editBtn  = (e._synthetic||isAdvOnly)?'': `<button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>`;
     const delBtn   = e._synthetic?'': `<button class="item-del"  onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>`;
 
     return`<div class="item${isPaid?' paid-item':''}">
@@ -787,18 +805,27 @@ function renderEmpList(elId,items){
   const el=document.getElementById(elId);
   if(!el)return;
   if(!items.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês</div>';return;}
-  el.innerHTML=items.map(e=>{
+  // Ordenar: não-adiantamentos primeiro, adiantamentos no final
+  const sorted=[
+    ...items.filter(e=>!e.type.endsWith('_advance')),
+    ...items.filter(e=>e.type.endsWith('_advance'))
+  ];
+  el.innerHTML=sorted.map(e=>{
     const cat=e.type.split('_')[1];
-    const dotC=cat==='salary'?'salary':cat==='advance'?'advance':'other';
-    const catLabel=cat==='salary'?'Salário':cat==='advance'?'Adiantamento':'Outros';
-    const badgeC=cat==='salary'?'salary':cat==='advance'?'advance':'once';
+    const isAdv=cat==='advance';
+    const dotC=isAdv?'expense':cat==='salary'?'salary':'other';
+    const catLabel=isAdv?'Adiantamento':cat==='salary'?'Salário':'Outros';
+    const badgeC=isAdv?'advance':cat==='salary'?'salary':'once';
     const rec=e.recurrent?'<span class="badge rec">&#128257; Recorrente</span>':`<span class="badge ${badgeC}">${catLabel}</span>`;
     const dBadge=e.byDani?'<span class="badge adv-dani">&#128149; pela Dani</span>':'';
     const inh=e.inherited?'<span style="font-size:10px;color:var(--text3)">herdado</span>':'';
-    return`<div class="item">
+    // Adiantamento: valor em vermelho, linha separadora visual se for o primeiro adiantamento
+    const amtClass=isAdv?'c-red':'c-amber';
+    const borderStyle=isAdv?'border-color:rgba(239,68,68,.25);':'';
+    return`<div class="item" style="${borderStyle}">
       <div class="dot ${dotC}"></div>
       <div class="item-info"><div class="item-name">${esc(e.desc)}</div><div class="item-meta">${rec}${dBadge}${inh}</div></div>
-      <span class="item-amount c-amber">${fmt(e.value)}</span>
+      <span class="item-amount ${amtClass}">${isAdv?'−':'+'}${fmt(e.value)}</span>
       <div class="item-actions">
         <button class="item-edit" onclick="openEditModal('${e.id}')" title="Editar">&#9998;</button>
         <button class="item-del" onclick="removeEntry('${e.id}',${!!e.recurrent})">&#215;</button>
