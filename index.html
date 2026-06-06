@@ -850,13 +850,12 @@ function renderReimbList(elId,reimbs,scope){
 function renderEmpPage(emp,idx,all){
   const page=document.getElementById('page-'+emp.id);
   const items=all.filter(e=>e.type.startsWith(emp.id+'_'));
-  const adv=items.filter(e=>e.type===emp.id+'_advance');
+  const adv   =items.filter(e=>e.type===emp.id+'_advance');
   const nonAdv=items.filter(e=>e.type!==emp.id+'_advance');
   const ta=adv.reduce((s,e)=>s+ +e.value,0);
   const ts=nonAdv.reduce((s,e)=>s+ +e.value,0);
   const pagar=Math.max(0,ts-ta);
   const excesso=ta>ts?ta-ts:0;
-  const reimbs=getReimbs(emp.id,cy,cm);
   const heroColor=emp.color==='amber'?'c-amber':'c-teal';
   page.innerHTML=`
     <div class="emp-hero ${emp.color}">
@@ -874,7 +873,29 @@ function renderEmpPage(emp,idx,all){
 }
 
 // Marcar como pago
-function markPaid(id){ togglePaid(id,cy,cm); render(); }
+function markPaid(id){
+  // Se for o item sintético da Dani, marcar/desmarcar todos os lançamentos individuais dela
+  if(id.startsWith('__dani_')){
+    const all=getEntries(cy,cm);
+    const daniItems=all.filter(e=>e.type==='dani');
+    const paid=getPaid(cy,cm);
+    // Se o sintético estava pago, desmarcar tudo; se não, marcar tudo
+    const jaPago=paid.has(id);
+    const k=key(cy,cm);
+    if(!DB.paid[k])DB.paid[k]=[];
+    const s=new Set(DB.paid[k]);
+    // toggle no próprio sintético
+    jaPago?s.delete(id):s.add(id);
+    // propagar para cada lançamento individual
+    daniItems.forEach(e=>{ jaPago?s.delete(e.id):s.add(e.id); });
+    DB.paid[k]=Array.from(s);
+    dbSave();
+    render();
+    return;
+  }
+  togglePaid(id,cy,cm);
+  render();
+}
 
 // ── DASHBOARD: expandir/recolher seções ──
 function toggleDashSection(id){
